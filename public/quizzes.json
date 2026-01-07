@@ -1,0 +1,134 @@
+{
+    "quizzes": [
+        {
+            "id": "static-1",
+            "title": "Science & Nature",
+            "type": "mixed",
+            "timer": 300,
+            "questionCount": 4,
+            "questions": [
+                {
+                    "id": "s1",
+                    "type": "mcq",
+                    "question": "Which gas do plants absorb from the atmosphere for photosynthesis?",
+                    "options": [
+                        "Oxygen",
+                        "Nitrogen",
+                        "Carbon Dioxide",
+                        "Hydrogen"
+                    ],
+                    "answer": "Carbon Dioxide",
+                    "points": 10
+                },
+                {
+                    "id": "s2",
+                    "type": "oneword",
+                    "question": "What is the hardest natural substance on Earth?",
+                    "answer": "Diamond",
+                    "points": 10
+                },
+                {
+                    "id": "s3",
+                    "type": "mcq",
+                    "question": "Is the Sun a planet?",
+                    "options": [
+                        "True",
+                        "False"
+                    ],
+                    "answer": "False",
+                    "points": 5
+                },
+                {
+                    "id": "s4",
+                    "type": "flashcard",
+                    "front": "Mitochondria",
+                    "back": "The powerhouse of the cell.",
+                    "points": 0
+                }
+            ]
+        },
+        {
+            "id": "static-2",
+            "title": "World History",
+            "type": "mcq",
+            "timer": 480,
+            "questionCount": 3,
+            "questions": [
+                {
+                    "id": "h1",
+                    "type": "mcq",
+                    "question": "Who was the first President of the United States?",
+                    "options": [
+                        "Thomas Jefferson",
+                        "Abraham Lincoln",
+                        "George Washington",
+                        "John Adams"
+                    ],
+                    "answer": "George Washington",
+                    "points": 10
+                },
+                {
+                    "id": "h2",
+                    "type": "mcq",
+                    "question": "The Great Wall of China was primarily built to protect against which invaders?",
+                    "options": [
+                        "Mongols",
+                        "Romans",
+                        "Egyptians",
+                        "Persians"
+                    ],
+                    "answer": "Mongols",
+                    "points": 10
+                },
+                {
+                    "id": "h3",
+                    "type": "mcq",
+                    "question": "In which year did Titanic sink?",
+                    "options": [
+                        "1910",
+                        "1912",
+                        "1914",
+                        "1916"
+                    ],
+                    "answer": "1912",
+                    "points": 10
+                }
+            ]
+        },
+        {
+            "id": "static-3",
+            "title": "Logical Reasoning",
+            "type": "mixed",
+            "timer": 0,
+            "questionCount": 3,
+            "questions": [
+                {
+                    "id": "l1",
+                    "type": "oneword",
+                    "question": "What comes next in the sequence: 2, 4, 8, 16, ...?",
+                    "answer": "32",
+                    "points": 15
+                },
+                {
+                    "id": "l2",
+                    "type": "mcq",
+                    "question": "If all Bloops are Razzies and all Razzies are Lazzies, are all Bloops definitely Lazzies?",
+                    "options": [
+                        "Yes",
+                        "No",
+                        "Cannot be determined"
+                    ],
+                    "answer": "Yes",
+                    "points": 20
+                },
+                {
+                    "id": "l3",
+                    "type": "flashcard",
+                    "front": "Occam's Razor",
+                    "back": "The principle that the simplest explanation is usually the right one.",
+                    "points": 0
+                }
+            ]
+        }
+    ]
+}
