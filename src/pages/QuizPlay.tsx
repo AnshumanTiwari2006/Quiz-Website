@@ -1,12 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft } from "lucide-react";
+import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import FlashcardComponent from "@/components/FlashcardComponent";
 import { getQuizById } from "@/lib/quizLoader";
+
+const shuffleArray = (array: any[]) => {
+  const newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+};
 
 const QuizPlay = () => {
   const { quizId } = useParams();
@@ -14,10 +23,51 @@ const QuizPlay = () => {
   const { toast } = useToast();
   const [quiz, setQuiz] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [flagged, setFlagged] = useState<Record<number, boolean>>({});
   const [timeLeft, setTimeLeft] = useState(0);
   const [studentName, setStudentName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Special state for matching type
+  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const [shuffledMatchOptions, setShuffledMatchOptions] = useState<any[]>([]);
+
+  // Refs for line drawing
+  const leftRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const rightRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [lineCoords, setLineCoords] = useState<any[]>([]);
+
+  useEffect(() => {
+    const handleViolation = () => {
+      if (document.hidden) {
+        // Zero out all answers
+        setAnswers({});
+
+        toast({
+          title: "Assessment Terminated",
+          description: "SECURITY VIOLATION: Tab switching detected. Your exam has been closed, and a score of 0 has been recorded for this attempt.",
+          variant: "destructive",
+        });
+
+        // Small delay to let the toast be seen before navigating
+        setTimeout(() => {
+          sessionStorage.setItem("quizResult", JSON.stringify({
+            score: 0,
+            total: quiz?.questions.length * 10 || 100,
+            details: [],
+            quizTitle: quiz?.title || "Assessment",
+            isCheated: true
+          }));
+          navigate(`/quiz/${quizId}/result`);
+        }, 100);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleViolation);
+    return () => document.removeEventListener("visibilitychange", handleViolation);
+  }, [toast, navigate, quizId, quiz]);
 
   useEffect(() => {
     const name = sessionStorage.getItem("studentName");
@@ -47,7 +97,57 @@ const QuizPlay = () => {
     };
 
     loadQuiz();
-  }, [quizId, navigate]);
+  }, [quizId, navigate, toast]);
+
+  useEffect(() => {
+    if (quiz) {
+      const q = quiz.questions[currentIndex];
+      if (q.type === 'match') {
+        const rights = (q.pairs || []).map((p: any) => p.right);
+        setShuffledMatchOptions(shuffleArray(rights));
+      } else {
+        setShuffledMatchOptions([]);
+      }
+    }
+  }, [currentIndex, quiz]);
+
+  const updateLines = () => {
+    if (!containerRef.current || !quiz) return;
+    const q = quiz.questions[currentIndex];
+    if (q.type !== 'match') {
+      setLineCoords([]);
+      return;
+    }
+
+    const currentMatches = answers[q.id] || {};
+    const newCoords: any[] = [];
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    Object.entries(currentMatches).forEach(([left, right]) => {
+      const leftEl = leftRefs.current[left];
+      const rightEl = rightRefs.current[right as string];
+
+      if (leftEl && rightEl) {
+        const leftRect = leftEl.getBoundingClientRect();
+        const rightRect = rightEl.getBoundingClientRect();
+
+        newCoords.push({
+          x1: leftRect.right - containerRect.left,
+          y1: leftRect.top + leftRect.height / 2 - containerRect.top,
+          x2: rightRect.left - containerRect.left,
+          y2: rightRect.top + rightRect.height / 2 - containerRect.top,
+          color: 'hsl(var(--primary))'
+        });
+      }
+    });
+    setLineCoords(newCoords);
+  };
+
+  useEffect(() => {
+    updateLines();
+    window.addEventListener('resize', updateLines);
+    return () => window.removeEventListener('resize', updateLines);
+  }, [answers, currentIndex, quiz, shuffledMatchOptions]);
 
   useEffect(() => {
     if (timeLeft > 0 && quiz) {
@@ -65,9 +165,25 @@ const QuizPlay = () => {
     }
   }, [timeLeft, quiz]);
 
-  const handleAnswer = (questionId: string, answer: string) => {
-    // Just update the answer, NO feedback logic here
+  const handleAnswer = (questionId: string, answer: any) => {
     setAnswers({ ...answers, [questionId]: answer });
+  };
+
+  const handleMatchClick = (side: 'left' | 'right', value: string, questionId: string) => {
+    if (side === 'left') {
+      setSelectedLeft(value);
+    } else if (side === 'right' && selectedLeft) {
+      const currentMatching = answers[questionId] || {};
+      const newMatching = { ...currentMatching, [selectedLeft]: value };
+      handleAnswer(questionId, newMatching);
+      setSelectedLeft(null);
+    }
+  };
+
+  const clearMatch = (questionId: string, leftKey: string) => {
+    const currentMatching = { ...(answers[questionId] || {}) };
+    delete currentMatching[leftKey];
+    handleAnswer(questionId, currentMatching);
   };
 
   const handleSubmit = () => {
@@ -75,28 +191,50 @@ const QuizPlay = () => {
     const details = quiz.questions.map((q: any) => {
       if (q.type === "flashcard") return null;
 
-      const userAnswer = (answers[q.id] || "").toLowerCase().trim();
-      const correctAnswer = q.answer.toLowerCase().trim();
-      const isCorrect = userAnswer === correctAnswer;
+      let isCorrect = false;
+      let userAnswerStr = "";
+      let correctAnswerStr = "";
 
-      if (isCorrect) {
-        score += q.points;
+      if (q.type === "mcq" || q.type === "oneword" || q.type === "truefalse") {
+        const rawUserAnswer = (answers[q.id] || "").toString().trim();
+        const rawCorrectAnswer = q.answer.toString().trim();
+
+        userAnswerStr = rawUserAnswer;
+        correctAnswerStr = rawCorrectAnswer;
+        isCorrect = rawUserAnswer.toLowerCase() === rawCorrectAnswer.toLowerCase();
+      } else if (q.type === "multi_mcq") {
+        const userParts = (answers[q.id] || "").toString().split("|").filter(Boolean).map(s => s.trim().toLowerCase());
+        const correctParts = q.answer.toString().split("|").filter(Boolean).map(s => s.trim().toLowerCase());
+
+        const userSet = new Set(userParts);
+        const correctSet = new Set(correctParts);
+
+        isCorrect = userSet.size === correctSet.size && [...correctSet].every(val => userSet.has(val));
+        userAnswerStr = userParts.join(", ");
+        correctAnswerStr = correctParts.join(", ");
+      } else if (q.type === "match") {
+        const userMatched = answers[q.id] || {};
+        const pairs = q.pairs || [];
+        isCorrect = pairs.length > 0 && pairs.every((p: any) => userMatched[p.left] === p.right);
+
+        userAnswerStr = pairs.map((p: any) => `${p.left} → ${userMatched[p.left] || '?'}`).join(", ");
+        correctAnswerStr = pairs.map((p: any) => `${p.left} → ${p.right}`).join(", ");
       }
+
+      if (isCorrect) score += q.points;
 
       return {
         question: q.question,
-        userAnswer: answers[q.id] || "No Answer",
-        correctAnswer: q.answer,
-        isCorrect
+        userAnswer: userAnswerStr || "No Answer",
+        correctAnswer: correctAnswerStr,
+        isCorrect,
+        type: q.type
       };
     }).filter(Boolean);
 
     const totalPoints = quiz.questions.reduce((acc: number, q: any) =>
       q.type !== "flashcard" ? acc + q.points : acc, 0);
 
-    // Using sessionStorage temporarily for the result page, 
-    // but the user's "reset on refresh" rule will be handled 
-    // by clearing these or ensuring the Result page handles it.
     sessionStorage.setItem("quizResult", JSON.stringify({
       score,
       total: totalPoints,
@@ -122,113 +260,316 @@ const QuizPlay = () => {
   const isLastQuestion = currentIndex === quiz.questions.length - 1;
 
   return (
-    <div className="min-h-screen gradient-bg">
-      <header className="p-6 border-b border-border/40 bg-white/50 backdrop-blur sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      {/* Header - Silver Bar */}
+      <header className="py-6 px-4 md:px-6 border-b border-border/50 bg-secondary backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-medium">
-                <Brain className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
+                <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg font-bold truncate max-w-[200px] md:max-w-md">{quiz.title}</h1>
-                <p className="text-xs text-muted-foreground">Candidate: {studentName}</p>
+                <h1 className="text-xl font-bold tracking-tight text-foreground truncate max-w-[180px] md:max-w-md">{quiz.title}</h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-0.5">
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    Student: {studentName}
+                  </p>
+                  {quiz.subject && (
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
+                      {quiz.subject}
+                    </p>
+                  )}
+                  {quiz.class && (
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
+                      Class: {quiz.class}
+                    </p>
+                  )}
+                  {quiz.teacherName && (
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
+                      By: {quiz.teacherName}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             {quiz.timer > 0 && (
               <Badge
-                variant={timeLeft < 60 ? "destructive" : "outline"}
-                className={`rounded-full px-4 py-1.5 transition-colors ${timeLeft < 60 ? 'animate-pulse' : ''}`}
+                variant={timeLeft < 60 ? "destructive" : "secondary"}
+                className={`rounded-full px-5 py-2 font-mono text-sm border-0 ${timeLeft < 60 ? 'animate-pulse bg-destructive text-white' : 'bg-primary/10 text-primary'}`}
               >
                 <Clock className="mr-2 h-4 w-4" />
-                <span className="font-mono text-sm">
-                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-                </span>
+                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
               </Badge>
             )}
           </div>
-          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
             <div
-              className="gradient-primary h-full rounded-full transition-all duration-500 ease-out"
+              className="bg-primary h-full rounded-full transition-all duration-700 ease-in-out"
               style={{ width: `${((currentIndex + 1) / quiz.questions.length) * 100}%` }}
             />
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 max-w-3xl">
-        <div className="mb-6 flex justify-between items-center">
-          <Badge variant="secondary" className="rounded-full px-4 py-1">
+      <main className="container mx-auto px-6 py-12 max-w-7xl">
+        <div className="mb-8 flex justify-between items-center">
+          <Badge variant="outline" className="rounded-full px-4 py-1.5 border-border/40 bg-white/50 font-bold text-[10px] uppercase tracking-widest text-foreground">
             Question {currentIndex + 1} of {quiz.questions.length}
           </Badge>
-          <span className="text-sm font-medium text-muted-foreground italic">
-            {currentQuestion.type === 'mcq' ? 'Select the best option' :
-              currentQuestion.type === 'oneword' ? 'Type your answer' : 'Flashcard Study'}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] uppercase font-bold tracking-widest text-muted-foreground/60 hidden sm:inline">
+              {currentQuestion.type === 'mcq' ? 'Multiple Choice' :
+                currentQuestion.type === 'truefalse' ? 'True / False' :
+                  currentQuestion.type === 'oneword' ? 'Short Answer' :
+                    currentQuestion.type === 'match' ? 'Matching' : 'Flashcard'}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFlagged(prev => ({ ...prev, [currentIndex]: !prev[currentIndex] }))}
+              className={`rounded-full px-4 py-1 h-auto text-[10px] font-bold uppercase tracking-widest transition-all ${flagged[currentIndex] ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20'}`}
+            >
+              {flagged[currentIndex] ? 'Flagged' : 'Mark Review'}
+            </Button>
+          </div>
         </div>
 
-        <div className="mb-8 min-h-[400px]">
-          {currentQuestion.type === "flashcard" ? (
-            <FlashcardComponent
-              front={currentQuestion.front || ""}
-              back={currentQuestion.back || ""}
-            />
-          ) : (
-            <Card className="p-8 md:p-12 rounded-3xl shadow-strong border-0 bg-white/95 backdrop-blur animate-in fade-in slide-in-from-bottom-4">
-              <h2 className="text-2xl md:text-3xl font-bold mb-10 leading-tight">{currentQuestion.question}</h2>
-
-              {currentQuestion.type === "mcq" && currentQuestion.options && (
-                <div className="space-y-4">
-                  {currentQuestion.options.map((option: string, index: number) => (
-                    <Button
-                      key={index}
-                      variant={answers[currentQuestion.id] === option ? "default" : "outline"}
-                      onClick={() => handleAnswer(currentQuestion.id, option)}
-                      className={`w-full justify-start text-left h-auto py-5 px-7 rounded-2xl transition-all border-2 ${answers[currentQuestion.id] === option
-                          ? "bg-primary text-white border-primary shadow-medium scale-[1.02]"
-                          : "hover:border-primary/50 hover:bg-primary/5"
-                        }`}
-                    >
-                      <span className="flex items-center gap-4">
-                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${answers[currentQuestion.id] === option ? 'bg-white/20' : 'bg-muted'
-                          }`}>
-                          {String.fromCharCode(65 + index)}
-                        </span>
-                        <span className="text-lg">{option}</span>
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-              )}
-
-              {currentQuestion.type === "oneword" && (
-                <div className="relative group">
-                  <input
-                    type="text"
-                    autoFocus
-                    value={answers[currentQuestion.id] || ""}
-                    onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
-                    placeholder="Type your answer here..."
-                    className="w-full p-6 bg-muted/30 border-2 border-transparent rounded-2xl text-xl focus:outline-none focus:border-primary focus:bg-white transition-all shadow-inner"
-                  />
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-primary opacity-0 group-focus-within:opacity-100 transition-opacity">
-                    <Brain className="w-6 h-6 animate-pulse" />
+        <div className="flex flex-col lg:flex-row gap-20 items-start justify-between">
+          <div className="flex-1 w-full max-w-3xl min-w-0">
+            <div className="mb-12">
+              {currentQuestion.type === "flashcard" ? (
+                <FlashcardComponent
+                  front={currentQuestion.front || ""}
+                  back={currentQuestion.back || ""}
+                />
+              ) : (
+                <Card className="p-10 md:p-14 rounded-[2.5rem] border-0 bg-secondary shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500 border border-white/50 flex flex-col min-h-[500px]">
+                  <div className="mb-6 text-center md:text-left">
+                    <h2 className="text-lg md:text-xl font-bold tracking-tight leading-snug text-foreground break-words">{currentQuestion.question}</h2>
                   </div>
-                </div>
+
+                  {(currentQuestion.type === "mcq" || currentQuestion.type === "multi_mcq") && currentQuestion.options && (
+                    <div className="grid gap-4">
+                      {currentQuestion.options.map((option: string, index: number) => {
+                        const isSelected = currentQuestion.type === "mcq"
+                          ? answers[currentQuestion.id] === option
+                          : (answers[currentQuestion.id] || "").split("|").includes(option);
+
+                        return (
+                          <Button
+                            key={index}
+                            variant={isSelected ? "default" : "outline"}
+                            onClick={() => {
+                              if (currentQuestion.type === "mcq") {
+                                handleAnswer(currentQuestion.id, option);
+                              } else {
+                                const current = answers[currentQuestion.id] || "";
+                                const opts = current ? current.split("|") : [];
+                                const idx = opts.indexOf(option);
+                                if (idx > -1) opts.splice(idx, 1);
+                                else opts.push(option);
+                                handleAnswer(currentQuestion.id, opts.join("|"));
+                              }
+                            }}
+                            className={`w-full justify-start text-left h-auto py-6 px-8 rounded-2xl transition-all border-2 group shadow-sm ${isSelected
+                              ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.01]"
+                              : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
+                              }`}
+                          >
+                            <span className="flex items-center gap-4 w-full">
+                              <span className={`${isSelected ? "bg-white/20 text-white" : "bg-primary/10 text-primary"} w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors group-hover:bg-white/20 group-hover:text-white`}>
+                                {currentQuestion.type === "multi_mcq" ? (
+                                  <div className={`w-3 h-3 border-2 rounded ${isSelected ? "bg-white border-white" : "border-primary"} flex items-center justify-center`}>
+                                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                                  </div>
+                                ) : String.fromCharCode(65 + index)}
+                              </span>
+                              <span className="flex-1 text-sm md:text-base font-bold tracking-tight break-words leading-relaxed whitespace-normal">{option}</span>
+                            </span>
+                          </Button>
+                        );
+                      })}
+                      {currentQuestion.type === "multi_mcq" && (
+                        <p className="text-center text-[8px] uppercase font-bold tracking-widest text-muted-foreground mt-4 opacity-40">Multiple Answers Possible</p>
+                      )}
+                    </div>
+                  )}
+
+                  {currentQuestion.type === "truefalse" && (
+                    <div className="grid grid-cols-2 gap-8">
+                      {["True", "False"].map((option) => (
+                        <Button
+                          key={option}
+                          variant={answers[currentQuestion.id] === option ? "default" : "outline"}
+                          onClick={() => handleAnswer(currentQuestion.id, option)}
+                          className={`h-40 text-2xl font-bold uppercase tracking-widest rounded-[2rem] border-2 transition-all ${answers[currentQuestion.id] === option
+                            ? "bg-primary text-primary-foreground border-primary shadow-strong"
+                            : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
+                            }`}
+                        >
+                          {option}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {currentQuestion.type === "oneword" && (
+                    <div className="relative group max-w-2xl mx-auto">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={answers[currentQuestion.id] || ""}
+                        onChange={(e) => handleAnswer(currentQuestion.id, e.target.value.toLowerCase())}
+                        placeholder="Type your answer..."
+                        className="w-full p-8 bg-white/50 border-2 border-white/80 rounded-[2rem] text-2xl font-bold focus:outline-none focus:border-primary focus:bg-white transition-all shadow-inner placeholder:text-muted-foreground/30 text-center text-foreground"
+                      />
+                      <div className="mt-8 flex justify-center opacity-30">
+                        <Brain className="w-8 h-8 animate-pulse text-primary" />
+                      </div>
+                    </div>
+                  )}
+
+                  {currentQuestion.type === "match" && (
+                    <div className="space-y-12">
+                      <div ref={containerRef} className="grid md:grid-cols-2 gap-16 relative">
+                        <svg className="absolute inset-0 pointer-events-none w-full h-full z-0 overflow-visible">
+                          {lineCoords.map((line, i) => (
+                            <line
+                              key={i}
+                              x1={line.x1}
+                              y1={line.y1}
+                              x2={line.x2}
+                              y2={line.y2}
+                              stroke={line.color}
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              className="animate-in fade-in transition-all duration-300"
+                              style={{ strokeDasharray: '5,5' }}
+                            />
+                          ))}
+                        </svg>
+
+                        <div className="space-y-4 relative z-10">
+                          <h4 className="font-bold text-center text-muted-foreground uppercase tracking-widest text-[9px] mb-6">Column A</h4>
+                          {(currentQuestion.pairs || []).map((p: any, i: number) => (
+                            <Button
+                              key={i}
+                              ref={(el) => (leftRefs.current[p.left] = el)}
+                              onClick={() => handleMatchClick('left', p.left, currentQuestion.id)}
+                              className={`w-full h-16 rounded-2xl text-lg font-bold shadow-sm transition-all border-2 ${selectedLeft === p.left ? 'bg-primary text-white border-primary scale-[1.02]'
+                                : answers[currentQuestion.id]?.[p.left] ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary hover:text-white' : 'bg-white/50 border-white text-foreground hover:bg-primary hover:text-white hover:border-primary'}`}
+                            >
+                              {p.left}
+                            </Button>
+                          ))}
+                        </div>
+
+                        <div className="space-y-4 relative z-10">
+                          <h4 className="font-bold text-center text-muted-foreground uppercase tracking-widest text-[9px] mb-6">Column B</h4>
+                          {shuffledMatchOptions.map((option, i) => (
+                            <Button
+                              key={i}
+                              ref={(el) => (rightRefs.current[option] = el)}
+                              onClick={() => handleMatchClick('right', option, currentQuestion.id)}
+                              className={`w-full h-16 rounded-2xl text-lg font-bold shadow-sm transition-all border-2 ${Object.values(answers[currentQuestion.id] || {}).includes(option)
+                                ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary hover:text-white' : 'bg-white/50 border-white text-foreground hover:bg-primary hover:text-white hover:border-primary'}`}
+                            >
+                              {option}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-white/30 rounded-[2rem] p-8 border border-white/50">
+                        <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-6 flex items-center gap-2">
+                          Active Connections
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(answers[currentQuestion.id] || {}).map(([left, right]) => (
+                            <Badge key={left} className="pl-5 pr-2 py-3 bg-white text-primary border border-primary/10 rounded-full shadow-sm flex items-center gap-4">
+                              <span className="font-bold text-xs uppercase">{left as string}</span>
+                              <ArrowRight className="w-3 h-3 opacity-30" />
+                              <span className="font-bold text-xs uppercase">{right as string}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => clearMatch(currentQuestion.id, left)}
+                                className="h-6 w-6 p-0 rounded-full hover:bg-destructive hover:text-white"
+                              >
+                                ×
+                              </Button>
+                            </Badge>
+                          ))}
+                          {Object.keys(answers[currentQuestion.id] || {}).length === 0 && (
+                            <p className="text-muted-foreground/40 text-xs font-bold uppercase tracking-widest italic py-2">Select items to form pairs</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               )}
+            </div>
+          </div>
+
+          {/* Navigation Sidebar */}
+          <aside className="w-full lg:w-72 shrink-0 space-y-6 lg:sticky lg:top-32">
+            <Card className="p-6 rounded-[2rem] border-0 bg-secondary/50 shadow-soft ring-1 ring-border/30">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6">Quiz Navigator</h3>
+              <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-4 gap-2">
+                {quiz.questions.map((q: any, idx: number) => {
+                  const isAnswered = q.type === 'flashcard' ? true : !!answers[q.id];
+                  const isFlagged = flagged[idx];
+                  const isCurrent = currentIndex === idx;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentIndex(idx)}
+                      className={`h-10 rounded-xl font-bold text-xs transition-all flex items-center justify-center border-2
+                        ${isCurrent ? 'border-primary scale-110 shadow-md transform' : 'border-transparent'}
+                        ${isFlagged ? 'bg-blue-500 text-white' :
+                          isAnswered ? 'bg-green-500 text-white' : 'bg-white/50 text-muted-foreground/60 hover:bg-white'}
+                      `}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-8 pt-6 border-t border-border/20 grid grid-cols-2 gap-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-green-500" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Answered</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-blue-500" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Review</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-white border border-border/20" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Open</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full border-2 border-primary" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Current</span>
+                </div>
+              </div>
             </Card>
-          )}
+          </aside>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Button
             variant="ghost"
             onClick={() => setCurrentIndex(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="rounded-xl px-4 md:px-8 h-14"
+            className="rounded-full px-10 h-16 text-foreground hover:bg-primary hover:text-white transition-all font-bold"
           >
-            <ChevronLeft className="mr-2 h-5 w-5" />
-            <span className="hidden md:inline">Previous</span>
+            <ChevronLeft className="mr-3 h-5 w-5" />
+            Previous
           </Button>
 
           <div className="flex-1" />
@@ -236,18 +577,18 @@ const QuizPlay = () => {
           {isLastQuestion ? (
             <Button
               onClick={handleSubmit}
-              className="gradient-primary text-white rounded-xl px-10 h-14 shadow-strong hover:scale-105 transition-all text-lg font-bold"
+              className="bg-primary text-primary-foreground rounded-full px-12 h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-xl font-bold"
             >
-              <CheckCircle2 className="mr-2 h-5 w-5" />
               Finish Quiz
+              <CheckCircle2 className="ml-3 h-6 w-6" />
             </Button>
           ) : (
             <Button
               onClick={() => setCurrentIndex(currentIndex + 1)}
-              className="gradient-primary text-white rounded-xl px-10 h-14 shadow-medium hover:shadow-strong transition-all text-lg font-bold"
+              className="bg-primary text-primary-foreground rounded-full px-12 h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-xl font-bold"
             >
               Next
-              <ChevronRight className="ml-2 h-5 w-5" />
+              <ChevronRight className="ml-3 h-6 w-6" />
             </Button>
           )}
         </div>
@@ -255,6 +596,7 @@ const QuizPlay = () => {
     </div>
   );
 };
+
 
 export default QuizPlay;
 

@@ -59,43 +59,44 @@ const QuizEntry = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 rounded-3xl shadow-strong border-0 bg-white/90 backdrop-blur animate-scale-in">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium animate-pulse-slow">
-            <Brain className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <Card className="w-full max-w-lg p-12 rounded-[2.5rem] border-0 bg-white shadow-strong ring-1 ring-border/50 animate-in fade-in zoom-in duration-500">
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft">
+            <Brain className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
-          <p className="text-muted-foreground">Get ready to test your knowledge!</p>
+          <h1 className="text-3xl font-extrabold mb-3 tracking-tight">{quiz.title}</h1>
+          <p className="text-muted-foreground font-medium uppercase tracking-[0.2em] text-[10px]">Academic Assessment Entry</p>
         </div>
 
-        <div className="mb-8 p-4 bg-muted/50 rounded-2xl">
-          <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="mb-10 p-6 bg-primary/5 rounded-2xl border border-primary/10">
+          <div className="grid grid-cols-2 gap-8 text-center divide-x divide-primary/10">
             <div>
-              <p className="text-sm text-muted-foreground">Questions</p>
-              <p className="text-2xl font-bold">{quiz.questionCount}</p>
+              <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Total Items</p>
+              <p className="text-3xl font-black text-primary">{quiz.questionCount}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Time Limit</p>
-              <p className="text-2xl font-bold">
-                {quiz.timer > 0 ? `${Math.floor(quiz.timer / 60)} min` : "No Limit"}
+              <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Allocated Time</p>
+              <p className="text-3xl font-black text-primary">
+                {quiz.timer > 0 ? `${Math.floor(quiz.timer / 60)}m` : "∞"}
               </p>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleStart} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">Your Name</Label>
+        <form onSubmit={handleStart} className="space-y-8">
+          <div className="space-y-3">
+            <Label htmlFor="name" className="text-[11px] uppercase font-bold tracking-widest text-primary/70 ml-1">Candidate Credentials</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-primary/40 w-5 h-5" />
               <Input
                 id="name"
                 type="text"
-                placeholder="Enter your name"
+                autoFocus
+                placeholder="Enter Full Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-10 rounded-xl border-2 h-12"
+                className="pl-12 rounded-2xl border-2 border-border/50 h-16 text-lg font-bold focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30 shadow-inner"
                 required
               />
             </div>
@@ -103,20 +104,20 @@ const QuizEntry = () => {
 
           <Button
             type="submit"
-            className="w-full gradient-primary text-white rounded-xl h-12 text-base shadow-medium hover:shadow-strong transition-all hover:scale-105"
+            className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-primary/95 transition-all text-lg font-black tracking-tight"
           >
-            Start Quiz
-            <ArrowRight className="ml-2 h-5 w-5" />
+            AUTHORIZE & START
+            <ArrowRight className="ml-3 h-5 w-5" />
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-10 text-center">
           <Button
             variant="ghost"
             onClick={() => navigate('/quizzes')}
-            className="text-sm rounded-full"
+            className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors h-auto py-2"
           >
-            ← Back to Quizzes
+            ← Cancel Assessment
           </Button>
         </div>
       </Card>

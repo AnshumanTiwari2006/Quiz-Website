@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,27 +6,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Brain, Plus, Trash2, ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Papa from "papaparse";
+import { getQuizById } from "@/lib/quizLoader";
 
 interface Question {
   id: string;
-  type: "mcq" | "oneword" | "flashcard";
+  type: "mcq" | "oneword" | "flashcard" | "truefalse" | "match" | "multi_mcq";
   question: string;
   options?: string[];
   answer: string;
   points: number;
   front?: string;
   back?: string;
+  pairs?: { left: string; right: string }[];
 }
+
+const SUBJECTS = [
+  "English", "Mathematics", "Science", "Physics", "Chemistry", "Biology",
+  "History", "Geography", "Civics", "Computer Science", "Hindi", "Sanskrit",
+  "Economics", "Accountancy", "Business Studies", "General Knowledge",
+  "Environmental Studies", "Physical Education", "Fine Arts", "Psychology"
+];
+
+const CLASSES = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
+
 
 const CreateQuiz = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
-  const [quizType, setQuizType] = useState<"mcq" | "oneword" | "flashcard" | "mixed">("mcq");
+  const [quizType, setQuizType] = useState<"mcq" | "oneword" | "flashcard" | "mixed" | "truefalse" | "match" | "multi_mcq">("mcq");
   const [timer, setTimer] = useState(0);
+  const [subject, setSubject] = useState("");
+  const [targetClass, setTargetClass] = useState("");
+  const [teacherName, setTeacherName] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { quizId } = useParams();
   const isEditing = !!quizId;
@@ -38,15 +56,16 @@ const CreateQuiz = () => {
     }
 
     if (isEditing) {
-      const stored = localStorage.getItem("quizzes");
-      if (stored) {
-        const quizzes = JSON.parse(stored);
-        const quiz = quizzes.find((q: any) => q.id === quizId);
+      const loadQuizData = async () => {
+        const quiz = await getQuizById(quizId as string);
         if (quiz) {
           setTitle(quiz.title);
-          setQuizType(quiz.type);
+          setQuizType(quiz.type as any);
           setTimer(quiz.timer);
-          setQuestions(quiz.questions);
+          setQuestions(quiz.questions || []);
+          setSubject(quiz.subject || "");
+          setTargetClass(quiz.class || "");
+          setTeacherName(quiz.teacherName || "");
         } else {
           toast({
             title: "Quiz not found",
@@ -55,26 +74,80 @@ const CreateQuiz = () => {
           });
           navigate("/admin/quizzes");
         }
-      }
+      };
+      loadQuizData();
     }
-  }, [navigate, quizId, isEditing]);
+  }, [navigate, quizId, isEditing, toast]);
 
   const addQuestion = () => {
     const newQuestion: Question = {
       id: Date.now().toString(),
       type: quizType === "mixed" ? "mcq" : quizType,
       question: "",
-      options: quizType === "mcq" || quizType === "mixed" ? ["", "", "", ""] : undefined,
+      options: (quizType === "mcq" || quizType === "mixed" || quizType === "multi_mcq") ? ["", "", "", ""] :
+        quizType === "truefalse" ? ["True", "False"] : undefined,
       answer: "",
       points: 10,
+      pairs: quizType === "match" ? [{ left: "", right: "" }] : undefined,
     };
     setQuestions([...questions, newQuestion]);
   };
 
+  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const newQuestions: Question[] = results.data.map((row: any, index: number) => {
+          const type = (row.type || "mcq").toLowerCase().trim() as any;
+          const q: Question = {
+            id: (Date.now() + index).toString(),
+            type: ["mcq", "oneword", "flashcard", "truefalse", "match", "multi_mcq"].includes(type) ? type : "mcq",
+            question: row.question || "",
+            answer: row.answer || "",
+            points: parseInt(row.points) || 10,
+          };
+
+          if (q.type === "mcq" || q.type === "multi_mcq") {
+            q.options = row.options ? row.options.split("|").map((opt: string) => opt.trim()) : ["", "", "", ""];
+          } else if (q.type === "truefalse") {
+            q.options = ["True", "False"];
+          } else if (q.type === "flashcard") {
+            q.front = row.question || "";
+            q.back = row.answer || "";
+          }
+
+          return q;
+        });
+
+        setQuestions([...questions, ...newQuestions]);
+        toast({
+          title: "Import Success",
+          description: `Successfully imported ${newQuestions.length} questions.`,
+        });
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      },
+      error: (error) => {
+        toast({
+          title: "Import Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
   const updateQuestion = (id: string, field: string, value: any) => {
-    setQuestions(questions.map(q =>
-      q.id === id ? { ...q, [field]: value } : q
-    ));
+    setQuestions(questions.map(q => {
+      if (q.id === id) {
+        if (field === "") return { ...q, ...value };
+        return { ...q, [field]: value };
+      }
+      return q;
+    }));
   };
 
   const updateOption = (id: string, index: number, value: string) => {
@@ -102,6 +175,9 @@ const CreateQuiz = () => {
       title,
       type: quizType,
       timer,
+      subject,
+      class: targetClass,
+      teacherName,
       questionCount: questions.length,
       questions,
     };
@@ -125,67 +201,114 @@ const CreateQuiz = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-bg">
-      <header className="p-6 border-b border-border/40 bg-white/50 backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-              <Brain className="w-7 h-7 text-white" />
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      {/* Header - Matching Landing Page Header */}
+      <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
+              <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold">{isEditing ? "Edit Quiz" : "Create New Quiz"}</h1>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">{isEditing ? "Edit Quiz" : "Create New Quiz"}</h1>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Configuration Panel</p>
+            </div>
           </div>
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => navigate('/admin/dashboard')}
-            className="rounded-full border-2"
+            className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            Cancel
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
-        <Card className="p-8 rounded-3xl shadow-soft border-0 bg-white/90 backdrop-blur mb-6">
-          <h2 className="text-xl font-bold mb-6">Quiz Details</h2>
+      <main className="max-w-5xl mx-auto px-6 py-12">
+        <Card className="p-8 rounded-[2.5rem] border-0 bg-background shadow-soft ring-1 ring-border/50 mb-10 overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-8">Basic Information</h2>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Quiz Title</Label>
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <Label htmlFor="title" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Quiz Title</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Math Basics"
-                className="rounded-xl mt-2"
+                placeholder="Enter a descriptive title..."
+                className="rounded-2xl border-2 border-border/10 h-14 text-lg font-bold focus:ring-primary/10 transition-all placeholder:text-muted-foreground/20 shadow-inner bg-white/50"
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="type">Quiz Type</Label>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <Label htmlFor="type" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Question Logic</Label>
                 <Select value={quizType} onValueChange={(value: any) => setQuizType(value)}>
-                  <SelectTrigger className="rounded-xl mt-2">
+                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mcq">Multiple Choice</SelectItem>
-                    <SelectItem value="oneword">One Word</SelectItem>
-                    <SelectItem value="flashcard">Flashcards</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
+                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                    <SelectItem value="mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Choice</SelectItem>
+                    <SelectItem value="multi_mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Answer MCQ</SelectItem>
+                    <SelectItem value="oneword" className="rounded-xl font-bold py-3 text-sm">Short Answer</SelectItem>
+                    <SelectItem value="flashcard" className="rounded-xl font-bold py-3 text-sm">Flashcards</SelectItem>
+                    <SelectItem value="truefalse" className="rounded-xl font-bold py-3 text-sm">True / False</SelectItem>
+                    <SelectItem value="match" className="rounded-xl font-bold py-3 text-sm">Matching</SelectItem>
+                    <SelectItem value="mixed" className="rounded-xl font-bold py-3 text-sm">Mixed Types</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="timer">Timer (seconds, 0 for no timer)</Label>
+              <div className="space-y-3">
+                <Label htmlFor="timer" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Time Limit (Sec)</Label>
                 <Input
                   id="timer"
                   type="number"
                   value={timer}
                   onChange={(e) => setTimer(parseInt(e.target.value) || 0)}
                   placeholder="300"
-                  className="rounded-xl mt-2"
+                  className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="subject" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Subject (Recommended)</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                    <SelectValue placeholder="Select Subject" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                    {SUBJECTS.map(s => (
+                      <SelectItem key={s} value={s} className="rounded-xl font-bold py-3 text-sm">{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="class" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Grade / Class (Recommended)</Label>
+                <Select value={targetClass} onValueChange={setTargetClass}>
+                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                    <SelectValue placeholder="Select Class" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                    {CLASSES.map(c => (
+                      <SelectItem key={c} value={c} className="rounded-xl font-bold py-3 text-sm">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3 md:col-span-2">
+                <Label htmlFor="teacher" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Educator / Teacher Name (Optional)</Label>
+                <Input
+                  id="teacher"
+                  value={teacherName}
+                  onChange={(e) => setTeacherName(e.target.value)}
+                  placeholder="Enter name..."
+                  className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
                 />
               </div>
             </div>
@@ -193,115 +316,238 @@ const CreateQuiz = () => {
         </Card>
 
         {/* Questions */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Questions ({questions.length})</h2>
-            <Button onClick={addQuestion} className="gradient-primary text-white rounded-xl">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Question
-            </Button>
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-8 px-2">
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Questions ({questions.length})</h2>
+            <div className="flex gap-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleCSVUpload}
+                accept=".csv"
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="rounded-full px-6 h-10 font-bold text-xs uppercase tracking-widest border-border text-muted-foreground hover:bg-secondary transition-all"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+              <Button onClick={addQuestion} className="bg-primary text-primary-foreground rounded-full px-8 h-10 shadow-md font-bold text-xs uppercase tracking-widest border-0">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Question
+              </Button>
+            </div>
           </div>
 
-          {questions.map((q, index) => (
-            <Card key={q.id} className="p-6 rounded-3xl shadow-soft border-0 bg-white/90 backdrop-blur mb-4">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold">Question {index + 1}</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeQuestion(q.id)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {q.type === "flashcard" ? (
-                <>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Front</Label>
-                      <Textarea
-                        value={q.front || ""}
-                        onChange={(e) => updateQuestion(q.id, "front", e.target.value)}
-                        placeholder="Question or term"
-                        className="rounded-xl mt-2"
-                      />
+          <div className="space-y-6">
+            {questions.map((q, index) => (
+              <Card key={q.id} className="p-0 overflow-hidden rounded-[2.5rem] border-0 bg-background shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex items-center justify-between py-4 px-8 bg-secondary/20 border-b border-border/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-xs text-primary">
+                      {index + 1}
                     </div>
-                    <div>
-                      <Label>Back</Label>
-                      <Textarea
-                        value={q.back || ""}
-                        onChange={(e) => updateQuestion(q.id, "back", e.target.value)}
-                        placeholder="Answer or definition"
-                        className="rounded-xl mt-2"
-                      />
-                    </div>
+                    {quizType === "mixed" && (
+                      <Select
+                        value={q.type}
+                        onValueChange={(val: any) => {
+                          const updates: any = { type: val };
+                          if ((val === "mcq" || val === "multi_mcq") && (!q.options || q.options.length === 0)) updates.options = ["", "", "", ""];
+                          if (val === "truefalse") updates.options = ["True", "False"];
+                          if (val === "match" && (!q.pairs || q.pairs.length === 0)) updates.pairs = [{ left: "", right: "" }];
+                          updateQuestion(q.id, "", updates);
+                        }}
+                      >
+                        <SelectTrigger className="w-[140px] h-9 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/80 border-border/20 shadow-sm">
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-1">
+                          <SelectItem value="mcq" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">MCQ</SelectItem>
+                          <SelectItem value="multi_mcq" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">Multi-MCQ</SelectItem>
+                          <SelectItem value="oneword" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">Short Answer</SelectItem>
+                          <SelectItem value="flashcard" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">Flashcard</SelectItem>
+                          <SelectItem value="truefalse" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">True/False</SelectItem>
+                          <SelectItem value="match" className="rounded-xl text-[10px] font-bold uppercase tracking-widest py-2">Match It</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Question</Label>
-                      <Textarea
-                        value={q.question}
-                        onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
-                        placeholder="Enter your question"
-                        className="rounded-xl mt-2"
-                      />
-                    </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeQuestion(q.id)}
+                    className="text-destructive hover:bg-destructive/10 h-10 w-10 p-0 rounded-full transition-all"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
 
-                    {q.type === "mcq" && q.options && (
-                      <div>
-                        <Label>Options</Label>
-                        <div className="space-y-2 mt-2">
+                <div className="p-8 md:p-10">
+                  {q.type === "flashcard" ? (
+                    <div className="grid md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Front Side</Label>
+                        <Textarea
+                          value={q.front || ""}
+                          onChange={(e) => updateQuestion(q.id, "front", e.target.value)}
+                          placeholder="Term or concept..."
+                          className="rounded-2xl border-2 border-border/10 min-h-[140px] p-5 font-bold focus:bg-white bg-white/50 shadow-inner"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Back Side</Label>
+                        <Textarea
+                          value={q.back || ""}
+                          onChange={(e) => updateQuestion(q.id, "back", e.target.value)}
+                          placeholder="Definition or answer..."
+                          className="rounded-2xl border-2 border-border/10 min-h-[140px] p-5 font-bold focus:bg-white bg-white/50 shadow-inner"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Question Prompt</Label>
+                        <Textarea
+                          value={q.question}
+                          onChange={(e) => updateQuestion(q.id, "question", e.target.value)}
+                          placeholder="Enter your question here..."
+                          className="rounded-2xl border-2 border-border/10 min-h-[100px] p-6 text-xl font-bold focus:bg-white bg-white/50 shadow-inner leading-relaxed"
+                        />
+                      </div>
+
+                      {(q.type === "mcq" || q.type === "multi_mcq") && q.options && (
+                        <div className="grid md:grid-cols-2 gap-4">
                           {q.options.map((opt, i) => (
-                            <Input
-                              key={i}
-                              value={opt}
-                              onChange={(e) => updateOption(q.id, i, e.target.value)}
-                              placeholder={`Option ${i + 1}`}
-                              className="rounded-xl"
-                            />
+                            <div key={i} className="relative group">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-secondary flex items-center justify-center text-[10px] font-bold text-primary transition-all group-focus-within:bg-primary group-focus-within:text-white">
+                                {String.fromCharCode(65 + i)}
+                              </div>
+                              <Input
+                                value={opt}
+                                onChange={(e) => updateOption(q.id, i, e.target.value)}
+                                placeholder={`Option ${i + 1}`}
+                                className="pl-14 rounded-xl border-2 border-border/10 h-12 font-bold focus:ring-primary/10 bg-white/50"
+                              />
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Correct Answer</Label>
-                        <Input
-                          value={q.answer}
-                          onChange={(e) => updateQuestion(q.id, "answer", e.target.value)}
-                          placeholder={q.type === "mcq" ? "e.g., Option 2" : "Enter answer"}
-                          className="rounded-xl mt-2"
-                        />
-                      </div>
-                      <div>
-                        <Label>Points</Label>
-                        <Input
-                          type="number"
-                          value={q.points}
-                          onChange={(e) => updateQuestion(q.id, "points", parseInt(e.target.value) || 0)}
-                          className="rounded-xl mt-2"
-                        />
+                      {q.type === "match" && (
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between border-b border-border/10 pb-4">
+                            <h4 className="text-[10px] uppercase font-bold tracking-widest text-primary/80">Matching Pairs</h4>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newPairs = [...(q.pairs || []), { left: "", right: "" }];
+                                updateQuestion(q.id, "pairs", newPairs);
+                              }}
+                              className="rounded-full h-8 px-4 font-bold text-[10px] uppercase tracking-widest border-secondary text-primary hover:bg-primary hover:text-white hover:border-primary transition-all"
+                            >
+                              <Plus className="mr-1.5 h-3 w-3" /> Add Pair
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            {(q.pairs || []).map((pair, pIdx) => (
+                              <div key={pIdx} className="flex gap-3 items-center group/pair animate-in fade-in slide-in-from-left-2 transition-all">
+                                <Input
+                                  placeholder="Source"
+                                  value={pair.left}
+                                  onChange={(e) => {
+                                    const newPairs = [...(q.pairs || [])];
+                                    newPairs[pIdx].left = e.target.value;
+                                    updateQuestion(q.id, "pairs", newPairs);
+                                  }}
+                                  className="rounded-xl border-2 border-border/10 h-12 font-bold bg-white/50 focus:bg-white"
+                                />
+                                <div className="w-10 flex justify-center opacity-20 group-focus-within/pair:opacity-100 transition-opacity">
+                                  <ArrowLeft className="rotate-180 w-4 h-4" />
+                                </div>
+                                <Input
+                                  placeholder="Target"
+                                  value={pair.right}
+                                  onChange={(e) => {
+                                    const newPairs = [...(q.pairs || [])];
+                                    newPairs[pIdx].right = e.target.value;
+                                    updateQuestion(q.id, "pairs", newPairs);
+                                  }}
+                                  className="rounded-xl border-2 border-border/10 h-12 font-bold bg-white/50 focus:bg-white"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={(q.pairs || []).length <= 1}
+                                  onClick={() => {
+                                    const newPairs = (q.pairs || []).filter((_, i) => i !== pIdx);
+                                    updateQuestion(q.id, "pairs", newPairs);
+                                  }}
+                                  className="text-destructive/50 hover:text-destructive hover:bg-destructive/10 h-10 w-10 p-0 rounded-full"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid md:grid-cols-2 gap-8 pt-6 border-t border-border/10">
+                        {q.type !== "match" && (
+                          <div className="space-y-3">
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Correct Answer</Label>
+                            {q.type === "truefalse" ? (
+                              <Select
+                                value={q.answer}
+                                onValueChange={(val) => updateQuestion(q.id, "answer", val)}
+                              >
+                                <SelectTrigger className="rounded-xl border-2 border-border/10 h-14 font-bold text-primary bg-white/50">
+                                  <SelectValue placeholder="Select correct option" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-0 shadow-strong p-1">
+                                  <SelectItem value="True" className="rounded-xl font-bold py-3 text-sm text-green-600">True</SelectItem>
+                                  <SelectItem value="False" className="rounded-xl font-bold py-3 text-sm text-destructive">False</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={q.answer}
+                                onChange={(e) => updateQuestion(q.id, "answer", e.target.value)}
+                                placeholder={q.type === "mcq" ? "Type the exact text..." : q.type === "multi_mcq" ? "Separate with | (e.g. Option 1|Option 2)" : "Correct answer..."}
+                                className="rounded-xl border-2 border-border/10 h-14 font-bold bg-white/50 focus:bg-white focus:ring-primary/10"
+                              />
+                            )}
+                          </div>
+                        )}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Points Value</Label>
+                          <Input
+                            type="number"
+                            value={q.points}
+                            onChange={(e) => updateQuestion(q.id, "points", parseInt(e.target.value) || 0)}
+                            className="rounded-xl border-2 border-border/10 h-14 font-bold bg-white/50 text-center"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </Card>
-          ))}
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <Button
           onClick={saveQuiz}
           size="lg"
-          className="w-full gradient-primary text-white rounded-xl shadow-strong hover:scale-105 transition-all"
+          className="w-full bg-primary text-primary-foreground rounded-[2rem] h-16 shadow-strong hover:scale-[1.01] transition-all text-xl font-bold tracking-tight border-0"
         >
-          {isEditing ? "Update Quiz" : "Create Quiz"}
+          {isEditing ? "Save Changes" : "Deploy Quiz Module"}
         </Button>
       </main>
     </div>

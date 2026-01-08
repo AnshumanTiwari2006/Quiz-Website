@@ -5,6 +5,9 @@ export interface Quiz {
     timer: number;
     questionCount: number;
     questions?: any[];
+    class?: string;
+    subject?: string;
+    teacherName?: string;
 }
 
 export const fetchQuizzes = async (): Promise<Quiz[]> => {

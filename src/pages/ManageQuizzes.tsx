@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Trash2, ArrowLeft, FileQuestion } from "lucide-react";
+import { Brain, Trash2, ArrowLeft, FileQuestion, Download, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,18 +17,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Quiz {
-  id: string;
-  title: string;
-  type: string;
-  timer: number;
-  questionCount: number;
+interface ManagedQuiz extends Quiz {
+  isStatic?: boolean;
 }
 
 const ManageQuizzes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizzes, setQuizzes] = useState<ManagedQuiz[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,11 +35,22 @@ const ManageQuizzes = () => {
     loadQuizzes();
   }, [navigate]);
 
-  const loadQuizzes = () => {
+  const loadQuizzes = async () => {
+    const staticQuizzes = await fetchQuizzes();
+    const formattedStatic: ManagedQuiz[] = staticQuizzes.map(q => ({ ...q, isStatic: true }));
+
     const stored = localStorage.getItem("quizzes");
-    if (stored) {
-      setQuizzes(JSON.parse(stored));
-    }
+    const localQuizzes: ManagedQuiz[] = stored ? JSON.parse(stored) : [];
+
+    // Combine them, avoiding duplicates by ID (Static first, then add local if not already there)
+    const combined = [...formattedStatic];
+    localQuizzes.forEach(lq => {
+      if (!combined.find(sq => sq.id === lq.id)) {
+        combined.push(lq);
+      }
+    });
+
+    setQuizzes(combined);
   };
 
   const confirmDelete = (id: string) => {
@@ -51,91 +59,137 @@ const ManageQuizzes = () => {
 
   const deleteQuiz = () => {
     if (!deleteId) return;
-    
+
     const updated = quizzes.filter(q => q.id !== deleteId);
     localStorage.setItem("quizzes", JSON.stringify(updated));
     setQuizzes(updated);
     setDeleteId(null);
-    
+
     toast({
       title: "Quiz Deleted",
       description: "Quiz has been removed successfully",
     });
   };
 
+  const exportToJson = () => {
+    const data = { quizzes };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "quizzes.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Ready",
+      description: "Quizzes exported to JSON. Replace 'public/quizzes.json' with this file.",
+    });
+  };
+
   return (
-    <div className="min-h-screen gradient-bg">
-      <header className="p-6 border-b border-border/40 bg-white/50 backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-              <Brain className="w-7 h-7 text-white" />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header - Matching Landing Page Header */}
+      <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
+              <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold">Manage Quizzes</h1>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">Manage Quizzes</h1>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Inventory Control</p>
+            </div>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/admin/dashboard')}
-            className="rounded-full border-2"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/contact')}
+              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
+            >
+              Contact Us
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/dashboard')}
+              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              onClick={exportToJson}
+              className="rounded-full bg-primary text-primary-foreground shadow-soft font-bold text-xs uppercase tracking-widest px-6 h-10 hover:scale-[1.02] transition-all border-0"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export JSON
+            </Button>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         {quizzes.length === 0 ? (
-          <Card className="p-12 rounded-3xl shadow-soft text-center border-0 bg-white/80 backdrop-blur">
-            <FileQuestion className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">No Quizzes Created Yet</h2>
-            <p className="text-muted-foreground mb-6">Create your first quiz to get started!</p>
-            <Button 
+          <Card className="p-12 rounded-[2.5rem] shadow-soft text-center border-0 bg-background ring-1 ring-border/50 max-w-2xl mx-auto box-content">
+            <FileQuestion className="w-16 h-16 text-primary/20 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold mb-3 tracking-tight text-foreground">No Quizzes Found</h2>
+            <p className="text-muted-foreground text-base mb-8 font-medium">Create your first quiz to begin tracking performance.</p>
+            <Button
               onClick={() => navigate('/admin/create')}
-              className="gradient-primary text-white rounded-xl"
+              className="bg-primary text-primary-foreground rounded-full px-10 h-14 font-bold tracking-tight shadow-strong hover:scale-[1.05] transition-all border-0"
             >
-              Create Quiz
+              Create New Quiz
             </Button>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quizzes.map((quiz) => (
-              <Card 
+              <Card
                 key={quiz.id}
-                className="p-6 rounded-3xl shadow-soft hover:shadow-medium transition-all border-0 bg-white/80 backdrop-blur"
+                className="p-6 rounded-3xl shadow-soft border-0 bg-background ring-1 ring-border/50 group hover:ring-primary/20 transition-all"
               >
-                <h3 className="text-xl font-bold mb-3">{quiz.title}</h3>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="secondary" className="rounded-full">
-                    {quiz.type}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full">
-                    {quiz.questionCount} Questions
-                  </Badge>
-                  {quiz.timer > 0 && (
-                    <Badge variant="outline" className="rounded-full">
-                      {Math.floor(quiz.timer / 60)} min
-                    </Badge>
+                <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-all duration-300">
+                  {quiz.isStatic ? (
+                    <Lock className="w-5 h-5 text-primary group-hover:text-white" />
+                  ) : (
+                    <FileQuestion className="w-5 h-5 text-primary group-hover:text-white" />
                   )}
                 </div>
+                <h3 className="text-xl font-bold mb-4 tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3.5rem]">{quiz.title}</h3>
 
-                <div className="flex gap-3">
-                  <Button 
+                <div className="flex flex-wrap gap-2 mb-8">
+                  <Badge className="bg-secondary text-primary border-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest group-hover:bg-primary/10 transition-colors">
+                    {quiz.isStatic ? "System" : "Custom"}
+                  </Badge>
+                  <Badge variant="outline" className="border-border/40 bg-transparent rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:border-primary/20 transition-colors">
+                    {quiz.questionCount} Items
+                  </Badge>
+                </div>
+
+                <div className="flex gap-2 pt-6 border-t border-border/20">
+                  <Button
                     variant="outline"
                     onClick={() => navigate(`/admin/edit/${quiz.id}`)}
-                    className="flex-1 rounded-xl border-2 hover:bg-muted"
+                    className="flex-1 rounded-xl border-secondary font-bold text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all h-10 text-foreground"
                   >
                     Edit
                   </Button>
-                  <Button 
-                    variant="destructive"
-                    onClick={() => confirmDelete(quiz.id)}
-                    className="flex-1 rounded-xl"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
+                  {!quiz.isStatic ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => confirmDelete(quiz.id)}
+                      className="flex-1 rounded-xl text-destructive hover:bg-destructive hover:text-white font-bold text-[10px] uppercase tracking-widest h-10 transition-all"
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Purge
+                    </Button>
+                  ) : (
+                    <div className="flex-1 text-center py-2 text-[8px] font-bold uppercase tracking-tight text-muted-foreground/50 italic flex items-center justify-center gap-2">
+                      Locked Registry
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -144,20 +198,20 @@ const ManageQuizzes = () => {
       </main>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent className="rounded-3xl">
+        <AlertDialogContent className="rounded-[2rem] border-0 ring-1 ring-border/50 shadow-strong p-8">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the quiz.
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">System Confirmation Required</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium text-lg leading-relaxed pt-2">
+              This operation is irreversible. All module data and associated performance metrics will be permanently purged from the registry.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+          <AlertDialogFooter className="pt-6 gap-3">
+            <AlertDialogCancel className="rounded-full px-8 h-14 font-bold border-2">ABORT</AlertDialogCancel>
+            <AlertDialogAction
               onClick={deleteQuiz}
-              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-full px-8 h-14 bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black"
             >
-              Delete
+              CONFIRM PURGE
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

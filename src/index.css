@@ -8,89 +8,86 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 250 100% 98%;
-    --foreground: 260 40% 15%;
+    /* Earthy Rich Palette Mapping */
+    --background: 46 100% 98%;
+    /* #fffcf2 - Floral White */
+    --foreground: 39 7% 14%;
+    /* #252422 - Eerie Black (Primary Text) */
 
-    --card: 0 0% 100%;
-    --card-foreground: 260 40% 15%;
+    /* Boxes & Bars - Silver/Beige */
+    --card: 38 11% 90%;
+    /* Lighter Silver for Box Backgrounds */
+    --card-foreground: 39 7% 14%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 260 40% 15%;
+    --popover: 38 11% 90%;
+    --popover-foreground: 39 7% 14%;
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
+    /* Special Context - Spicy Paprika */
+    --primary: 16 83% 54%;
+    /* #eb5e28 - Highlights & CTAs */
+    --primary-foreground: 46 100% 98%;
 
-    --secondary: 220 100% 96%;
-    --secondary-foreground: 260 40% 15%;
+    /* Secondary Structure - Silver */
+    --secondary: 38 11% 76%;
+    /* #ccc5b9 - Secondary Boxes/Bars */
+    --secondary-foreground: 39 7% 14%;
 
-    --muted: 250 60% 94%;
-    --muted-foreground: 260 20% 50%;
+    --muted: 38 11% 88%;
+    --muted-foreground: 30 6% 24%;
+    /* #403d39 - Black Olive (Muted Text) */
 
-    --accent: 25 95% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 16 83% 54%;
+    /* Accent Highlights */
+    --accent-foreground: 46 100% 98%;
 
-    --success: 142 76% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 45% 38%;
+    --success-foreground: 46 100% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 46 100% 98%;
 
-    --border: 250 40% 88%;
-    --input: 250 40% 88%;
-    --ring: 262 83% 58%;
+    --border: 38 11% 80%;
+    --input: 38 11% 80%;
+    --ring: 16 83% 54%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(245 100% 65%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(25 95% 58%) 0%, hsl(340 82% 52%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 45%) 0%, hsl(158 64% 52%) 100%);
-    --gradient-bg: linear-gradient(180deg, hsl(250 100% 98%) 0%, hsl(250 70% 96%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(16 83% 54%) 0%, hsl(16 75% 45%) 100%);
+    --gradient-bg: linear-gradient(180deg, hsl(46 100% 98%) 0%, hsl(38 11% 94%) 100%);
 
-    --shadow-soft: 0 4px 20px -2px hsl(262 83% 58% / 0.1);
-    --shadow-medium: 0 8px 30px -4px hsl(262 83% 58% / 0.15);
-    --shadow-strong: 0 12px 40px -6px hsl(262 83% 58% / 0.25);
+    --shadow-soft: 0 4px 12px -2px hsl(39 7% 14% / 0.08);
+    --shadow-medium: 0 8px 24px -4px hsl(39 7% 14% / 0.12);
+    --shadow-strong: 0 16px 40px -8px hsl(39 7% 14% / 0.18);
   }
 
   .dark {
-    --background: 260 40% 8%;
-    --foreground: 250 100% 98%;
+    --background: 39 7% 10%;
+    --foreground: 46 100% 98%;
 
-    --card: 260 35% 12%;
-    --card-foreground: 250 100% 98%;
+    --card: 39 7% 12%;
+    --card-foreground: 46 100% 98%;
 
-    --popover: 260 35% 12%;
-    --popover-foreground: 250 100% 98%;
+    --popover: 39 7% 12%;
+    --popover-foreground: 46 100% 98%;
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 16 83% 54%;
+    --primary-foreground: 46 100% 98%;
 
-    --secondary: 260 25% 18%;
-    --secondary-foreground: 250 100% 98%;
+    --secondary: 30 6% 24%;
+    --secondary-foreground: 46 100% 98%;
 
-    --muted: 260 25% 18%;
-    --muted-foreground: 250 40% 70%;
+    --muted: 15 15% 15%;
+    --muted-foreground: 38 11% 76%;
 
-    --accent: 25 95% 58%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 16 83% 54%;
+    --accent-foreground: 46 100% 98%;
 
-    --success: 142 76% 45%;
-    --success-foreground: 0 0% 100%;
+    --border: 39 7% 20%;
+    --input: 39 7% 20%;
+    --ring: 16 83% 54%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 260 25% 22%;
-    --input: 260 25% 22%;
-    --ring: 262 83% 58%;
-
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(245 100% 65%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(25 95% 58%) 0%, hsl(340 82% 52%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 45%) 0%, hsl(158 64% 52%) 100%);
-    --gradient-bg: linear-gradient(180deg, hsl(260 40% 8%) 0%, hsl(260 35% 12%) 100%);
-
-    --shadow-soft: 0 4px 20px -2px hsl(262 83% 58% / 0.2);
-    --shadow-medium: 0 8px 30px -4px hsl(262 83% 58% / 0.3);
-    --shadow-strong: 0 12px 40px -6px hsl(262 83% 58% / 0.4);
+    --gradient-primary: linear-gradient(135deg, hsl(16 83% 54%) 0%, hsl(16 70% 40%) 100%);
+    --gradient-bg: linear-gradient(180deg, hsl(39 7% 10%) 0%, hsl(39 7% 6%) 100%);
   }
 }
 
@@ -100,26 +97,29 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer utilities {
   .gradient-primary {
-    background: var(--gradient-primary);
+    @apply bg-primary;
+    /* Move away from flashy gradients to solid formal colors by default, or very subtle ones */
+    background-image: var(--gradient-primary);
   }
-  
+
   .gradient-accent {
-    background: var(--gradient-accent);
+    background-image: var(--gradient-accent);
   }
-  
+
   .gradient-success {
-    background: var(--gradient-success);
+    background-image: var(--gradient-success);
   }
-  
+
   .gradient-bg {
-    background: var(--gradient-bg);
+    background-image: var(--gradient-bg);
   }
 
   .shadow-soft {
@@ -135,15 +135,18 @@ All colors MUST be HSL.
   }
 
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
 
   @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
     }
+
     50% {
-      transform: translateY(-20px);
+      transform: translateY(-10px) rotate(0.5deg);
     }
   }
 }

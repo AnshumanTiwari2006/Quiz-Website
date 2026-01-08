@@ -15,7 +15,7 @@ const AdminLogin = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (username === "Rajiv Kumar Tiwari" && password === "abic@123") {
       localStorage.setItem("adminLoggedIn", "true");
       toast({
@@ -33,73 +33,67 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
-      <Card className="w-full max-w-md p-8 rounded-3xl shadow-strong border-0 bg-white/90 backdrop-blur animate-scale-in">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-            <Brain className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <Card className="w-full max-w-lg p-10 md:p-12 rounded-[2.5rem] border-0 bg-background shadow-soft ring-1 ring-border/50 animate-in fade-in zoom-in duration-500 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
+
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft group-hover:bg-primary transition-all">
+            <Brain className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Admin Login</h1>
-          <p className="text-muted-foreground">Sign in to manage your quizzes</p>
+          <h1 className="text-3xl font-bold mb-3 tracking-tight text-foreground">System Access</h1>
+          <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] opacity-70">Administrative Terminal</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+            <Label htmlFor="username" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Identity</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-primary/40 w-5 h-5" />
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter your username"
+                placeholder="Full Name"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 rounded-xl border-2 h-12"
+                className="pl-12 rounded-2xl border-2 border-border/10 h-16 text-lg font-bold focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30 shadow-inner bg-white/50"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <Label htmlFor="password" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Key Token</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-primary/40 w-5 h-5" />
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 rounded-xl border-2 h-12"
+                className="pl-12 rounded-2xl border-2 border-border/10 h-16 text-lg font-bold focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30 shadow-inner bg-white/50"
                 required
               />
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full gradient-primary text-white rounded-xl h-12 text-base shadow-medium hover:shadow-strong transition-all hover:scale-105"
+          <Button
+            type="submit"
+            className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:scale-[1.02] transition-all text-lg font-bold border-0"
           >
-            Sign In
+            Authorize Access
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
-          <Button 
-            variant="ghost" 
+        <div className="mt-8 text-center">
+          <Button
+            variant="ghost"
             onClick={() => navigate('/')}
-            className="text-sm rounded-full"
+            className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6 py-2"
           >
-            ← Back to Home
+            ← Back to Landing
           </Button>
-        </div>
-
-        <div className="mt-8 p-4 bg-muted/50 rounded-xl">
-          <p className="text-xs text-muted-foreground text-center">
-            <strong>Demo Credentials:</strong><br />
-            Username: Rajiv Kumar Tiwari<br />
-            Password: abic@123
-          </p>
         </div>
       </Card>
     </div>

@@ -1,132 +1,951 @@
 {
     "quizzes": [
         {
-            "id": "static-1",
-            "title": "Science & Nature",
+            "id": "java-history-xii",
+            "title": "Introduction to Core Java (History) Class - XII",
             "type": "mixed",
-            "timer": 300,
-            "questionCount": 4,
+            "timer": 960,
+            "questionCount": 16,
             "questions": [
                 {
-                    "id": "s1",
+                    "id": "j1",
                     "type": "mcq",
-                    "question": "Which gas do plants absorb from the atmosphere for photosynthesis?",
+                    "question": "जावा की उत्पत्ति किस कंपनी में हुई थी?",
+                    "answer": "Sun Microsystems",
                     "options": [
-                        "Oxygen",
-                        "Nitrogen",
-                        "Carbon Dioxide",
-                        "Hydrogen"
+                        "Sun Microsystems",
+                        "Oracle",
+                        "IBM",
+                        "Apple"
                     ],
-                    "answer": "Carbon Dioxide",
-                    "points": 10
+                    "points": 1
                 },
                 {
-                    "id": "s2",
+                    "id": "j2",
+                    "type": "mcq",
+                    "question": "जावा भाषा के जनक कौन हैं?",
+                    "answer": "James Gosling",
+                    "options": [
+                        "Bill Gates",
+                        "Bjarne Stroustrup",
+                        "James Gosling",
+                        "Dennis Ritchie"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j3",
+                    "type": "mcq",
+                    "question": "जावा किस प्रकार की प्रोग्रामिंग भाषा है?",
+                    "answer": "ऑब्जेक्ट ओरिएंटेड",
+                    "options": [
+                        "प्रोसीजरल ओरिएंटेड",
+                        "फंक्शनल",
+                        "लॉजिकल",
+                        "ऑब्जेक्ट ओरिएंटेड"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j4",
+                    "type": "mcq",
+                    "question": "जावा का पहला संस्करण (Java 1.0) कब जारी किया गया था?",
+                    "answer": "1995",
+                    "options": [
+                        "1991",
+                        "1995",
+                        "1999",
+                        "2004"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j5",
+                    "type": "mcq",
+                    "question": "जावा का उपयोग किन क्षेत्रों में किया जाता है?",
+                    "answer": "सभी विकल्प सही हैं",
+                    "options": [
+                        "वेब डेवलपमेंट",
+                        "एंड्रॉइड ऐप डेवलपमेंट",
+                        "एंटरप्राइज़ एप्लिकेशन",
+                        "सभी विकल्प सही हैं"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j6",
+                    "type": "mcq",
+                    "question": "Java Language के सम्बंध में सही कथन कौन सा है?",
+                    "answer": "Java have similar syntax as C++.",
+                    "options": [
+                        "Java is procedure oriented programming language.",
+                        "Java Language is an open source language.",
+                        "Java have similar syntax as C++.",
+                        "None of these"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j7",
+                    "type": "mcq",
+                    "question": "सर्वर-साइड एंटरप्राइज़ कंप्यूटिंग के लिए कौन सा Java संस्करण उपयुक्त है?",
+                    "answer": "Java EE",
+                    "options": [
+                        "Java SE",
+                        "Java EE",
+                        "Java ME",
+                        "Java 11"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j8",
+                    "type": "mcq",
+                    "question": "जावा भाषा के विकास के प्रमुख चरण कौन से थे?",
+                    "answer": "JDK का रिलीज़",
+                    "options": [
+                        "ओक भाषा का विकास",
+                        "एंड्रॉइड का निर्माण",
+                        "जावा नामकरण",
+                        "JDK का रिलीज़"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j9",
+                    "type": "mcq",
+                    "question": "जावा के विकास को प्रभावित करने वाले कारक कौन से थे?",
+                    "answer": "प्लेटफॉर्म स्वतंत्रता की आवश्यकता",
+                    "options": [
+                        "इंटरनेट का उदय",
+                        "मोबाइल उपकरणों का विकास",
+                        "क्लाइंट-सर्वर आर्किटेक्चर",
+                        "ऑब्जेक्ट ओरिएंटेड प्रोग्रामिंग की लोकप्रियता",
+                        "प्लेटफॉर्म स्वतंत्रता की आवश्यकता"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j10",
+                    "type": "mcq",
+                    "question": "जावा के प्रमुख संस्करण कौन से हैं?",
+                    "answer": "Java SE",
+                    "options": [
+                        "Java 8",
+                        "Java SE",
+                        "Java EE",
+                        "Java 11",
+                        "Java ME"
+                    ],
+                    "points": 1
+                },
+                {
+                    "id": "j11",
                     "type": "oneword",
-                    "question": "What is the hardest natural substance on Earth?",
-                    "answer": "Diamond",
-                    "points": 10
+                    "question": "Java भाषा के सम्बंध में WORA का Full Form लिखिए।",
+                    "answer": "WRITE ONCE RUN ANYWHERE",
+                    "points": 1
                 },
                 {
-                    "id": "s3",
+                    "id": "j12",
+                    "type": "oneword",
+                    "question": "Java भाषा के सम्बंध में JVM का Full Form लिखिए।",
+                    "answer": "JAVA VIRTUAL MACHINE",
+                    "points": 1
+                },
+                {
+                    "id": "j13",
+                    "type": "oneword",
+                    "question": "Java भाषा के सम्बंध में JDK का Full Form लिखिए।",
+                    "answer": "JAVA DEVELOPMENT KIT",
+                    "points": 1
+                },
+                {
+                    "id": "j14",
+                    "type": "oneword",
+                    "question": "Java भाषा के सम्बंध में JRE का Full Form लिखिए।",
+                    "answer": "JAVA RUNTIME ENVIRONMENT",
+                    "points": 1
+                },
+                {
+                    "id": "j15",
                     "type": "mcq",
-                    "question": "Is the Sun a planet?",
+                    "question": "Java programming language को सबसे पहले किस कंपनी द्वारा और किस project के तहत विकसित किया गया था?",
+                    "answer": "Sun Microsystems - Project Green",
                     "options": [
-                        "True",
-                        "False"
+                        "Sun Microsystems - Project Green",
+                        "Microsoft - Project Oak"
                     ],
+                    "points": 1
+                },
+                {
+                    "id": "j16",
+                    "type": "mcq",
+                    "question": "Java Virtual Machine (JVM) का मुख्य उद्देश्य क्या था?",
+                    "answer": "Platform independence को enable करना एवं Bytecode को execute करना।",
+                    "options": [
+                        "Memory management को handle करना।",
+                        "सिर्फ Windows OS के लिए Java applications को run करना।",
+                        "Platform independence को enable करना एवं Bytecode को execute करना।",
+                        "सभी विकल्प सही हैं"
+                    ],
+                    "points": 1
+                }
+            ]
+        },
+        {
+            "id": "intro-cs-tiwari",
+            "title": "Introduction to Computer Science",
+            "subject": "Computer Science",
+            "teacherName": "Rajiv Kumar Tiwari",
+            "class": "VI & XI",
+            "type": "mixed",
+            "timer": 900,
+            "questionCount": 15,
+            "questions": [
+                {
+                    "id": "cs1",
+                    "type": "truefalse",
+                    "question": "मिनी कम्प्यूटर माइक्रोकम्प्यूटर से छोटे होते हैं। / Mini computers are smaller than microcomputers.",
                     "answer": "False",
-                    "points": 5
+                    "points": 1
                 },
                 {
-                    "id": "s4",
-                    "type": "flashcard",
-                    "front": "Mitochondria",
-                    "back": "The powerhouse of the cell.",
-                    "points": 0
-                }
-            ]
-        },
-        {
-            "id": "static-2",
-            "title": "World History",
-            "type": "mcq",
-            "timer": 480,
-            "questionCount": 3,
-            "questions": [
-                {
-                    "id": "h1",
-                    "type": "mcq",
-                    "question": "Who was the first President of the United States?",
-                    "options": [
-                        "Thomas Jefferson",
-                        "Abraham Lincoln",
-                        "George Washington",
-                        "John Adams"
-                    ],
-                    "answer": "George Washington",
-                    "points": 10
+                    "id": "cs2",
+                    "type": "truefalse",
+                    "question": "हाइब्रिड कम्प्यूटर एनालॉग कम्प्यूटर की कार्यक्षमता प्रदान करता है। / Hybrid computer provides the functionality of an analog computer.",
+                    "answer": "True",
+                    "points": 1
                 },
                 {
-                    "id": "h2",
-                    "type": "mcq",
-                    "question": "The Great Wall of China was primarily built to protect against which invaders?",
-                    "options": [
-                        "Mongols",
-                        "Romans",
-                        "Egyptians",
-                        "Persians"
-                    ],
-                    "answer": "Mongols",
-                    "points": 10
+                    "id": "cs3",
+                    "type": "truefalse",
+                    "question": "पीडीपी 11 एक सुपरकम्प्यूटर है। / PDP 11 is a supercomputer.",
+                    "answer": "False",
+                    "points": 1
                 },
                 {
-                    "id": "h3",
-                    "type": "mcq",
-                    "question": "In which year did Titanic sink?",
-                    "options": [
-                        "1910",
-                        "1912",
-                        "1914",
-                        "1916"
-                    ],
-                    "answer": "1912",
-                    "points": 10
-                }
-            ]
-        },
-        {
-            "id": "static-3",
-            "title": "Logical Reasoning",
-            "type": "mixed",
-            "timer": 0,
-            "questionCount": 3,
-            "questions": [
+                    "id": "cs4",
+                    "type": "truefalse",
+                    "question": "असेंबली भाषा पहली पीढ़ी की भाषा है। / Assembly language is a first generation language.",
+                    "answer": "False",
+                    "points": 1
+                },
                 {
-                    "id": "l1",
+                    "id": "cs5",
+                    "type": "truefalse",
+                    "question": "उच्च-स्तरीय भाषाएँ मशीन से स्वतंत्र होती हैं। / High-level languages are machine-independent.",
+                    "answer": "True",
+                    "points": 1
+                },
+                {
+                    "id": "cs6",
                     "type": "oneword",
-                    "question": "What comes next in the sequence: 2, 4, 8, 16, ...?",
-                    "answer": "32",
-                    "points": 15
+                    "question": "SQL का Full Form लिखिए (CAPITAL LETTERS में) / Write full form of SQL in CAPITAL LETTERS.",
+                    "answer": "STRUCTURED QUERY LANGUAGE",
+                    "points": 1
                 },
                 {
-                    "id": "l2",
+                    "id": "cs7",
+                    "type": "oneword",
+                    "question": "BITS का Full Form लिखिए (CAPITAL LETTERS में) / Write full form of BITS in CAPITAL LETTERS.",
+                    "answer": "BINARY DIGITS",
+                    "points": 1
+                },
+                {
+                    "id": "cs8",
+                    "type": "oneword",
+                    "question": "RAM का Full Form लिखिए (CAPITAL LETTERS में) / Write full form of RAM in CAPITAL LETTERS.",
+                    "answer": "RANDOM ACCESS MEMORY",
+                    "points": 1
+                },
+                {
+                    "id": "cs9",
+                    "type": "oneword",
+                    "question": "4GL का Full Form लिखिए (CAPITAL LETTERS में) / Write full form of 4GL in CAPITAL LETTERS.",
+                    "answer": "FOURTH GENERATION LANGUAGE",
+                    "points": 1
+                },
+                {
+                    "id": "cs10",
+                    "type": "oneword",
+                    "question": "FORTRAN का Full Form लिखिए (CAPITAL LETTERS में) / Write full form of FORTRAN in CAPITAL LETTERS.",
+                    "answer": "FORMULA TRANSLATION",
+                    "points": 1
+                },
+                {
+                    "id": "cs11",
                     "type": "mcq",
-                    "question": "If all Bloops are Razzies and all Razzies are Lazzies, are all Bloops definitely Lazzies?",
+                    "question": "निम्नलिखित में कौन-सा माइक्रोकम्प्यूटर है? / Which of these is a microcomputer?",
                     "options": [
-                        "Yes",
-                        "No",
-                        "Cannot be determined"
+                        "डेस्कटॉप",
+                        "पीडीपी 11",
+                        "पीडीपी",
+                        "All of these"
                     ],
-                    "answer": "Yes",
-                    "points": 20
+                    "answer": "डेस्कटॉप",
+                    "points": 1
                 },
                 {
-                    "id": "l3",
-                    "type": "flashcard",
-                    "front": "Occam's Razor",
-                    "back": "The principle that the simplest explanation is usually the right one.",
-                    "points": 0
+                    "id": "cs12",
+                    "type": "mcq",
+                    "question": "किस प्रकार का कम्प्यूटर गिनती के बजाय माप द्वारा संचालित होता है? / Which type of computer operates by measurement instead of counting?",
+                    "options": [
+                        "डिजिटल",
+                        "हाइब्रिड",
+                        "एनालॉग",
+                        "None of these"
+                    ],
+                    "answer": "एनालॉग",
+                    "points": 1
+                },
+                {
+                    "id": "cs13",
+                    "type": "mcq",
+                    "question": "निम्नलिखित में से कौन-सा एम्बेडेड कम्प्यूटर का उदाहरण है? / Which of the following is an example of an embedded computer?",
+                    "options": [
+                        "माइक्रोवेव",
+                        "डिजिटल कैमरा",
+                        "ATM",
+                        "All of these"
+                    ],
+                    "answer": "All of these",
+                    "points": 1
+                },
+                {
+                    "id": "cs14",
+                    "type": "mcq",
+                    "question": "इनमें से कौन-सी भाषा कम्प्यूटर द्वारा समझी जा सकती है? / Which of these languages can be understood by the computer?",
+                    "options": [
+                        "असेंबली भाषा",
+                        "मशीनी भाषा",
+                        "उच्च स्तरीय भाषा",
+                        "None of these"
+                    ],
+                    "answer": "मशीनी भाषा",
+                    "points": 1
+                },
+                {
+                    "id": "cs15",
+                    "type": "mcq",
+                    "question": "इनमें से कौन-सी तीसरी पीढ़ी की भाषा है? / Which of these is a third generation language?",
+                    "options": [
+                        "उच्च-स्तरीय भाषा",
+                        "मशीनी भाषा",
+                        "असेंबली भाषा",
+                        "उपरोक्त सभी"
+                    ],
+                    "answer": "उच्च-स्तरीय भाषा",
+                    "points": 1
+                }
+            ]
+        },
+        {
+            "id": "java-datatypes-xi",
+            "title": "Introduction to Core Java (Data Types)",
+            "subject": "Computer Science",
+            "teacherName": "Rajiv Kumar Tiwari",
+            "class": "Class XI",
+            "type": "mcq",
+            "timer": 1200,
+            "questionCount": 20,
+            "questions": [
+                {
+                    "id": "dt1",
+                    "type": "mcq",
+                    "question": "जावा में डेटा टाइप क्या होता है?",
+                    "options": [
+                        "वेरिएबल्स की गिनती",
+                        "डेटा का आकार",
+                        "डेटा के लिए रूपांतरण तरीके",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "डेटा का आकार",
+                    "points": 1
+                },
+                {
+                    "id": "dt2",
+                    "type": "mcq",
+                    "question": "निम्न में से कौन-सा डेटा टाइप स्ट्रिंग वैल्यू को स्टोर कर सकता है?",
+                    "options": [
+                        "int",
+                        "boolean",
+                        "char",
+                        "String"
+                    ],
+                    "answer": "String",
+                    "points": 1
+                },
+                {
+                    "id": "dt3",
+                    "type": "mcq",
+                    "question": "निम्नलिखित में से कौन-सा डेटा टाइप संख्याओं को स्टोर कर सकता है?",
+                    "options": [
+                        "double",
+                        "char",
+                        "boolean",
+                        "String"
+                    ],
+                    "answer": "double",
+                    "points": 1
+                },
+                {
+                    "id": "dt4",
+                    "type": "mcq",
+                    "question": "जावा में वेरिएबल्स क्या होते हैं?",
+                    "options": [
+                        "डेटा को स्टोर करने के लिए नामित स्थान",
+                        "डेटा को प्रोसेस करने के लिए मशीनी स्थान",
+                        "डेटा को ट्रांसफर करने के लिए संकेत",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "डेटा को स्टोर करने के लिए नामित स्थान",
+                    "points": 1
+                },
+                {
+                    "id": "dt5",
+                    "type": "mcq",
+                    "question": "निम्नलिखित में से कौन -सा कीवर्ड एक वेरिएबल को पहचानता है?",
+                    "options": [
+                        "int",
+                        "final",
+                        "new",
+                        "void"
+                    ],
+                    "answer": "int",
+                    "points": 1
+                },
+                {
+                    "id": "dt6",
+                    "type": "mcq",
+                    "question": "जावा में लिटरल्स क्या होते हैं?",
+                    "options": [
+                        "फंक्शान के नाम",
+                        "अद्यतनीय डेटा",
+                        "कोड के ब्लॉक",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "अद्यतनीय डेटा",
+                    "points": 1
+                },
+                {
+                    "id": "dt7",
+                    "type": "mcq",
+                    "question": "निम्नलिखित में से कौन-सा लिटरल एक स्ट्रिंग को प्रदर्शित करता है?",
+                    "options": [
+                        "A",
+                        "42",
+                        "true",
+                        "\"Hello\""
+                    ],
+                    "answer": "\"Hello\"",
+                    "points": 1
+                },
+                {
+                    "id": "dt8",
+                    "type": "mcq",
+                    "question": "System.out.println का उपयोग क्या है?",
+                    "options": [
+                        "इनपुट प्रदान करने के लिए",
+                        "आउटपुट प्रदर्शित करने के लिए",
+                        "डेटा को संग्रहीत करने के लिए",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "आउटपुट प्रदर्शित करने के लिए",
+                    "points": 1
+                },
+                {
+                    "id": "dt9",
+                    "type": "mcq",
+                    "question": "इनपुट के लिए कौन-सा क्लास इस्तेमाल किया जाता है?",
+                    "options": [
+                        "Scanner",
+                        "PrintStream",
+                        "Buffered Reader",
+                        "InputStreamReader"
+                    ],
+                    "answer": "Scanner",
+                    "points": 1
+                },
+                {
+                    "id": "dt10",
+                    "type": "mcq",
+                    "question": "मेथड ओवरलोडिंग क्या है?",
+                    "options": [
+                        "एक मेथड को एक दूसरे नाम से पुनर्भाषित करना",
+                        "एक मेथड को एक दूसरे मेथड के साथ जोड़ना",
+                        "एक मेथड को एक दूसरे से अलग वेराएटी या संकेत में चलाना",
+                        "एक मेथड को एक दूसरे के साथ शीर्षक में बदलना"
+                    ],
+                    "answer": "एक मेथड को एक दूसरे से अलग वेराएटी या संकेत में चलाना",
+                    "points": 1
+                },
+                {
+                    "id": "dt11",
+                    "type": "mcq",
+                    "question": "कन्स्ट्रक्टर क्या होता है?",
+                    "options": [
+                        "एक वेरिएबल की घोषणा",
+                        "एक मेथड की घोषणा",
+                        "एक ऑ्जेक्ट का निर्माण",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक ऑ्जेक्ट का निर्माण",
+                    "points": 1
+                },
+                {
+                    "id": "dt12",
+                    "type": "mcq",
+                    "question": "कन्स्ट्रक्टर का क्या प्रमुख उद्देश्य है?",
+                    "options": [
+                        "डेटा को संग्रहीत करना",
+                        "एक्सेस कंट्रोल प्रदान करना",
+                        "ऑब्जेक्ट को बनाना और इनिशियलाइज़ करना",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "ऑब्जेक्ट को बनाना और इनिशियलाइज़ करना",
+                    "points": 1
+                },
+                {
+                    "id": "dt13",
+                    "type": "mcq",
+                    "question": "इनहैरिटेन्स क्या है?",
+                    "options": [
+                        "एक क्लास से दूसरे क्लास में डेटा की एक कॉपी",
+                        "एक क्लास से दूसरे क्लास में कोड की एक कॉपी",
+                        "एक क्लास के द्वारा एक इंटरफेस को इम्पलीमेंट करना",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक क्लास से दूसरे क्लास में कोड की एक कॉपी",
+                    "points": 1
+                },
+                {
+                    "id": "dt14",
+                    "type": "mcq",
+                    "question": "सबसे ऊपरी इनहैरिटेन्स क्या कहलाता है?",
+                    "options": [
+                        "सुपर इनहैरिटेन्स",
+                        "चाइल्ड इनहैरिटेन्स",
+                        "बेस इनहैरिटेन्स",
+                        "एब्स्ट्रैक्ट इनहैरिटेस"
+                    ],
+                    "answer": "सुपर इनहैरिटेन्स",
+                    "points": 1
+                },
+                {
+                    "id": "dt15",
+                    "type": "mcq",
+                    "question": "ऐनकैप्सुलेशन क्या है?",
+                    "options": [
+                        "डेटा को सुरक्षित रखना",
+                        "डेटा को प्रदर्शित करना",
+                        "डेटा को विभाजित करना",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "डेटा को सुरक्षित रखना",
+                    "points": 1
+                },
+                {
+                    "id": "dt16",
+                    "type": "mcq",
+                    "question": "इंटरफेस क्या है?",
+                    "options": [
+                        "एक वेरिएबल की घोषणा",
+                        "एक मेथड की घोषणा",
+                        "एक क्लास की घोषणा",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक मेथड की घोषणा",
+                    "points": 1
+                },
+                {
+                    "id": "dt17",
+                    "type": "mcq",
+                    "question": "एक क्लास में कितने इंटरफेस इम्प्लीमेंट की जा सकती है?",
+                    "options": [
+                        "सिर्फ़ एक",
+                        "एक से अधिक",
+                        "कोई भी नहीं",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक से अधिक",
+                    "points": 1
+                },
+                {
+                    "id": "dt18",
+                    "type": "mcq",
+                    "question": "Abstraction क्या है?",
+                    "options": [
+                        "एक class की घोषणा",
+                        "एक Interface की घोषणा",
+                        "एक abstract method की घोषणा",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक abstract method की घोषणा",
+                    "points": 1
+                },
+                {
+                    "id": "dt19",
+                    "type": "mcq",
+                    "question": "ओवरलोडेड मेथड को कैसे पहचाना जाता है?",
+                    "options": [
+                        "रिटर्न टाइप के आधार पर",
+                        "पैरामीटर की संख्या और प्रकार के आधार पर",
+                        "मेथड के नाम के आधार पर",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "पैरामीटर की संख्या और प्रकार के आधार पर",
+                    "points": 1
+                },
+                {
+                    "id": "dt20",
+                    "type": "mcq",
+                    "question": "Java में String है -",
+                    "options": [
+                        "एक Function",
+                        "एक Mutable Variable",
+                        "एक Immutable Variable",
+                        "सभी वर्णनात्मक"
+                    ],
+                    "answer": "एक Immutable Variable",
+                    "points": 1
+                }
+            ]
+        },
+        {
+            "id": "java-oop-1-xii",
+            "title": "Java and OOP Concept Part - 1",
+            "subject": "Computer Science",
+            "teacherName": "Rajiv Kumar Tiwari",
+            "class": "Class XII",
+            "type": "mixed",
+            "timer": 900,
+            "questionCount": 10,
+            "questions": [
+                {
+                    "id": "oop1_1",
+                    "type": "mcq",
+                    "question": "OOPS में Data और Function को एक साथ जोड़ने (Bind) को .........कहते है-",
+                    "options": [
+                        "Encapsulation",
+                        "Inheritance",
+                        "Polymorphism",
+                        "None of the these"
+                    ],
+                    "answer": "Encapsulation",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_2",
+                    "type": "multi_mcq",
+                    "question": "OOPS में Abstraction का अर्थ है-",
+                    "options": [
+                        "object की केवल आवश्यक जानकारी को दिखाना",
+                        "वह जानकारी जो जरुरी नहीं होती अर्थात background की जानकारी को छुपाये रखना।",
+                        "एक काम को दो अलग तरीको से करना",
+                        "उपरोक्त सभी"
+                    ],
+                    "answer": "object की केवल आवश्यक जानकारी को दिखाना|वह जानकारी जो जरुरी नहीं होती अर्थात background की जानकारी को छुपाये रखना।",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_3",
+                    "type": "multi_mcq",
+                    "question": "जावा में Polymorphism के प्रकार है-",
+                    "options": [
+                        "Compile-time polymorphism (Static polymorphism)",
+                        "Compile and Run time polymorphism",
+                        "Run-time polymorphism (Dynamic polymorphism)",
+                        "None of the these"
+                    ],
+                    "answer": "Compile-time polymorphism (Static polymorphism)|Run-time polymorphism (Dynamic polymorphism)",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_4",
+                    "type": "multi_mcq",
+                    "question": "OOPS Concept के प्रमुख भाग है -",
+                    "options": [
+                        "Class , Object, Inheritance",
+                        "Abstraction , Encapsulation, Polymorphism",
+                        "All of the above",
+                        "None of these"
+                    ],
+                    "answer": "Class , Object, Inheritance|Abstraction , Encapsulation, Polymorphism",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_5",
+                    "type": "multi_mcq",
+                    "question": "Object के संबंध में कौन सा कथन सत्य है?",
+                    "options": [
+                        "Object किसी Class का एक उदाहरण है।",
+                        "Object किसी Class का एक Variable है।",
+                        "Object किसी Class की attribute का Reference है।",
+                        "Object किसी Class का उदाहरण नहीं है।"
+                    ],
+                    "answer": "Object किसी Class का एक उदाहरण है।|Object किसी Class का एक Variable है।",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_6",
+                    "type": "mcq",
+                    "question": "Function Overload करने की क्रिया निम्न में से कौन- सा गुण दर्शाती है-",
+                    "options": [
+                        "Encapsulation",
+                        "Inheritance",
+                        "Polymorphism",
+                        "None of the these"
+                    ],
+                    "answer": "Polymorphism",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_7",
+                    "type": "multi_mcq",
+                    "question": "OOPs vs POP के सम्बंध मे सत्य कथनों का चयन कीजिए-",
+                    "options": [
+                        "OOPS: Program is divided into objects. | POP: Program is divided into functions.",
+                        "OOPS: Concept of virtual function. | POP: No virtual function.",
+                        "OOPS: Bottom-up approach. | POP: Top-down approach.",
+                        "OOPS: Adding new data and functions is easy | POP: Adding new data and functions is not easy"
+                    ],
+                    "answer": "OOPS: Program is divided into objects. | POP: Program is divided into functions.|OOPS: Concept of virtual function. | POP: No virtual function.|OOPS: Bottom-up approach. | POP: Top-down approach.",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_8",
+                    "type": "multi_mcq",
+                    "question": "Function Overriding के सम्बंध मे कथन सत्य है-",
+                    "options": [
+                        "Method have same name ,same number and same type of parameters.",
+                        "Overriding of the functions take place at run time.",
+                        "Overriding of the functions take place at compile time.",
+                        "फ़ंक्शन ओवरराइडिंग में, हमारे पास एक ही फ़ंक्शन की दो परिभाषाएँ होती हैं, एक सुपरक्लास में और एक व्युत्पन्न क्लास में।"
+                    ],
+                    "answer": "फ़ंक्शन ओवरराइडिंग में, हमारे पास एक ही फ़ंक्शन की दो परिभाषाएँ होती हैं, एक सुपरक्लास में और एक व्युत्पन्न क्लास में।",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_9",
+                    "type": "multi_mcq",
+                    "question": "Method Overloading सम्बंध मे कथन सत्य है-",
+                    "options": [
+                        "Two or more methods can have the same name inside the same class if they accept different arguments.",
+                        "Method overloading is achieved by either: changing the number of arguments or changing the data type of arguments.",
+                        "Method Overloading take place at compile time.",
+                        "Method Overloading take place at Run time."
+                    ],
+                    "answer": "Two or more methods can have the same name inside the same class if they accept different arguments.|Method overloading is achieved by either: changing the number of arguments or changing the data type of arguments.|Method Overloading take place at compile time.",
+                    "points": 1
+                },
+                {
+                    "id": "oop1_10",
+                    "type": "multi_mcq",
+                    "question": "OOPs में Inheritance के सम्बंध मे कथन सत्य है-",
+                    "options": [
+                        "एक Class किसी अन्य Class को अपने गुण विरासत में दे सकती है।",
+                        "गुण देने वाली Class Base /Super/ Parent Class कहलाती है।",
+                        "गुण प्राप्त करने वाली Class Derrived /Sub/Child Class कहलाती है।",
+                        "Derrived Class में Base Class के गुणों को प्राप्त किया जा सकता है।"
+                    ],
+                    "answer": "एक Class किसी अन्य Class को अपने गुण विरासत में दे सकती है।|गुण देने वाली Class Base /Super/ Parent Class कहलाती है।|गुण प्राप्त करने वाली Class Derrived /Sub/Child Class कहलाती है।|Derrived Class में Base Class के गुणों को प्राप्त किया जा सकता है।",
+                    "points": 1
+                }
+            ]
+        },
+        {
+            "id": "java-oop-2-xii",
+            "title": "Java and OOP Concept Part - 2",
+            "subject": "Computer Science",
+            "teacherName": "Rajiv Kumar Tiwari",
+            "class": "Class XII",
+            "type": "mixed",
+            "timer": 900,
+            "questionCount": 15,
+            "questions": [
+                {
+                    "id": "oop2_1",
+                    "type": "mcq",
+                    "question": "Java में Class एवं Object से होने वाले लाभ है -",
+                    "options": [
+                        "Reusability",
+                        "Modularity",
+                        "Encapsulation & Polymorphism",
+                        "(उपरोक्त सभी)"
+                    ],
+                    "answer": "(उपरोक्त सभी)",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_2",
+                    "type": "mcq",
+                    "question": "Java में किस गुण के कारण समान कोड को बार —बार लिखने की आवश्यकता नही होती है?",
+                    "options": [
+                        "Encapsulation",
+                        "Polymorphism",
+                        "Inheritance",
+                        "None of these"
+                    ],
+                    "answer": "Inheritance",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_3",
+                    "type": "multi_mcq",
+                    "question": "OOP हमे निम्नलिखित सुविधाऐं प्रदान करता है-",
+                    "options": [
+                        "Encapsulation गुण के कारण डाटा पूर्ण रूप से सुरक्षित रहता है।",
+                        "बड़े प्रोग्राम को छोटे-छोटे Function में विभाजित करने की सुविधा प्रदान करता है।",
+                        "समान प्रकार के आब्जेक्टों का वर्गीकरण किया जा सकता है।",
+                        "कोड की जटिलता को कम करता है एवं प्रबंधन की सुविधा प्रदान करता है।"
+                    ],
+                    "answer": "Encapsulation गुण के कारण डाटा पूर्ण रूप से सुरक्षित रहता है।|समान प्रकार के आब्जेक्टों का वर्गीकरण किया जा सकता है।|कोड की जटिलता को कम करता है एवं प्रबंधन की सुविधा प्रदान करता है।",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_4",
+                    "type": "multi_mcq",
+                    "question": "OOPS Concept के प्रमुख भाग है -",
+                    "options": [
+                        "Class , Object, Inheritance",
+                        "Abstraction , Encapsulation, Polymorphism",
+                        "All of the above",
+                        "None of these"
+                    ],
+                    "answer": "Class , Object, Inheritance|Abstraction , Encapsulation, Polymorphism",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_5",
+                    "type": "multi_mcq",
+                    "question": "Object के संबंध में कौन सा कथन सत्य है?",
+                    "options": [
+                        "Object किसी Class का एक उदाहरण है।",
+                        "Object किसी Class का एक Variable है।",
+                        "Object किसी Class की attribute का Reference है।",
+                        "Object किसी Class का उदाहरण नहीं है।"
+                    ],
+                    "answer": "Object किसी Class का एक उदाहरण है।|Object किसी Class का एक Variable है।",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_6",
+                    "type": "mcq",
+                    "question": "Function Overload करने की क्रिया निम्न में से कौन- सा गुण दर्शाती है-",
+                    "options": [
+                        "Encapsulation",
+                        "Inheritance",
+                        "Polymorphism",
+                        "None of the these"
+                    ],
+                    "answer": "Polymorphism",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_7",
+                    "type": "truefalse",
+                    "question": "Java भाषा में Multiple Inheritance को प्राप्त करने के लिए Extends शब्द का प्रयोग करते है।",
+                    "answer": "False",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_8",
+                    "type": "mcq",
+                    "question": "फंक्शन को Polymorphism का गुण प्रदान करना कहलाता है-",
+                    "options": [
+                        "Operator Overloading",
+                        "Function Overloading",
+                        "Polymorphism Overloading",
+                        "All of these"
+                    ],
+                    "answer": "Function Overloading",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_9",
+                    "type": "mcq",
+                    "question": "जब किसी Java Program में मेथड को child class में डिक्लेअर किया जाता है जो पहले से ही Parent Class में मौजूद हो तो यह प्रक्रिया कहलाती है —",
+                    "options": [
+                        "Object Overloading",
+                        "Class Overloading",
+                        "Object Overriding",
+                        "Method Overloaded (Correction: Overriding)"
+                    ],
+                    "answer": "Method Overloaded (Correction: Overriding)",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_10",
+                    "type": "multi_mcq",
+                    "question": "Java में Method Overriding के लिए निम्नलिखित में से कौन से तथ्य सत्य होने चाहिए।-",
+                    "options": [
+                        "Method का नाम एकसमान (Same) होना चाहिए।",
+                        "Constructor को Override किया जा सकता है।",
+                        "final एवं static method को override नहीं कर सकते है।",
+                        "Parent Class की abstract method को override करना चाहिए।"
+                    ],
+                    "answer": "Method का नाम एकसमान (Same) होना चाहिए।|final एवं static method को override नहीं कर सकते है।|Parent Class की abstract method को override करना चाहिए।",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_11",
+                    "type": "mcq",
+                    "question": "Java में यदि एक Method को inherit नहीं किया जा सकता है तो उसे-",
+                    "options": [
+                        "override किया जा सकता है।",
+                        "override नहीं किया जा सकता है।",
+                        "override एवं overload दोनों किया जा सकता है।",
+                        "उपरोक्त सभी।"
+                    ],
+                    "answer": "override नहीं किया जा सकता है।",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_12",
+                    "type": "mcq",
+                    "question": "Java में instance Method को override किया जा सकता है केवल तब जब —",
+                    "options": [
+                        "वह method subclass के द्वारा inherit हो।",
+                        "वह method subclass के द्वारा inherit नहीं किया गया हो।",
+                        "यदि वह method final एवं static हो।",
+                        "उपरोक्त सभी।"
+                    ],
+                    "answer": "वह method subclass के द्वारा inherit हो।",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_13",
+                    "type": "truefalse",
+                    "question": "Java में final एवं static के रूप declare किया गया method override किया जा सकता है?",
+                    "answer": "False",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_14",
+                    "type": "multi_mcq",
+                    "question": "एनकैप्सूलेशन के क्या फायदे होते हैं?",
+                    "options": [
+                        "डाटा की सुरक्षिता और पुनर्नियोजनीयता",
+                        "कोड की साझनीयता",
+                        "डेटा की विशेषता",
+                        "डेटा को विभाजित करने की प्रक्रिया"
+                    ],
+                    "answer": "डाटा की सुरक्षिता और पुनर्नियोजनीयता|कोड की साझनीयता",
+                    "points": 1
+                },
+                {
+                    "id": "oop2_15",
+                    "type": "multi_mcq",
+                    "question": "ऑब्जेक्ट (Object) और क्लास (Class) के बीच के अंतर को सही ढंग से दर्शाते हैं?",
+                    "options": [
+                        "ऑब्जेक्ट एक वास्तविक इकाई होती है जबकि क्लास एक ब्लूप्रिंट होता है।",
+                        "क्लास डेटा को स्टोर करता है जबकि ऑब्जेक्ट केवल विधियों (Methods) को स्टोर करता है।",
+                        "एक क्लास में कई ऑब्जेक्ट्स हो सकते हैं।",
+                        "ऑब्जेक्ट क्लास का एक इंस्टेंस होता है।"
+                    ],
+                    "answer": "ऑब्जेक्ट एक वास्तविक इकाई होती है जबकि क्लास एक ब्लूप्रिंट होता है।|एक क्लास में कई ऑब्जेक्ट्स हो सकते हैं।|ऑब्जेक्ट क्लास का एक इंस्टेंस होता है।",
+                    "points": 1
                 }
             ]
         }
