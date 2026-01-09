@@ -38,8 +38,8 @@ const AdminLogin = () => {
         <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
 
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft group-hover:bg-primary transition-all">
-            <Brain className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+            <img src="/School-logo.png" alt="School Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold mb-3 tracking-tight text-foreground">System Access</h1>
           <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] opacity-70">Administrative Terminal</p>

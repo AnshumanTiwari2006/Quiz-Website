@@ -14,7 +14,7 @@ const Index = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <main className="max-w-5xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-6 py-12 md:py-16">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
             Expert Learning Platform
@@ -85,7 +85,7 @@ const Index = () => {
               <div className="relative group">
                 <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-2xl group-hover:bg-primary/30 transition-all" />
                 <img
-                  src="/photo-creator.jpeg"
+                  src="/photo-creator-1.jpeg"
                   alt="Creator"
                   className="rounded-[2rem] w-full h-[400px] object-cover relative z-10 shadow-soft grayscale hover:grayscale-0 transition-all duration-700"
                 />
@@ -101,8 +101,8 @@ const Index = () => {
                   Scholar Synergy was envisioned as more than just a testing tool. It was built to bridge the gap between passive learning and active mastery.
                 </p>
                 <div className="pt-4 border-t border-border/40">
-                  <p className="text-lg font-bold text-foreground">Lead Architect</p>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary/60">Visionary behind Scholar Synergy</p>
+                  <p className="text-lg font-bold text-foreground">Rajiv Kumar Tiwari</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-primary/60">Visionary & Lead Developer</p>
                 </div>
               </div>
             </div>
