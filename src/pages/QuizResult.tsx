@@ -9,26 +9,31 @@ import confetti from "canvas-confetti";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 const QuizResult = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [resultData, setResultData] = useState<any>(null);
   const [studentName, setStudentName] = useState("");
   const certificateRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
   useEffect(() => {
-    const name = sessionStorage.getItem("studentName");
     const storedResult = sessionStorage.getItem("quizResult");
 
-    if (!name || !storedResult) {
+    if (!storedResult) {
       navigate(`/quiz/${quizId}`);
       return;
     }
 
     const data = JSON.parse(storedResult);
-    setStudentName(name);
     setResultData(data);
+    setStudentName(profile?.name || user?.email || "Student");
 
     // Trigger confetti if score is high
     const percentage = data.total > 0 ? (data.score / data.total) * 100 : 0;
@@ -51,7 +56,35 @@ const QuizResult = () => {
         confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
       }, 250);
     }
-  }, [quizId, navigate]);
+
+    // Save score to Firestore
+    const saveScore = async () => {
+      if (hasSaved || !user) return;
+      try {
+        await addDoc(collection(db, "scores"), {
+          quizId,
+          quizTitle: data.quizTitle,
+          teacherId: data.teacherId || "",
+          teacherName: data.teacherName || "",
+          userId: user.uid,
+          userName: profile?.name || user.displayName || "Student",
+          userEmail: user.email,
+          score: data.score,
+          total: data.total,
+          percentage: data.total > 0 ? (data.score / data.total) * 100 : 0,
+          timestamp: new Date().toISOString(),
+          isCheated: data.isCheated || false
+        });
+        setHasSaved(true);
+      } catch (error) {
+        console.error("Error saving score:", error);
+      }
+    };
+
+    if (data && user) {
+      saveScore();
+    }
+  }, [quizId, navigate, user, profile, hasSaved]);
 
   if (!resultData) return null;
 

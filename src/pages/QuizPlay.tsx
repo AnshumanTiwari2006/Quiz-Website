@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import FlashcardComponent from "@/components/FlashcardComponent";
-import { getQuizById } from "@/lib/quizLoader";
 import Navbar from "@/components/Navbar";
 
 const shuffleArray = (array: any[]) => {
@@ -18,10 +17,15 @@ const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 const QuizPlay = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, loading: authLoading } = useAuth();
   const [quiz, setQuiz] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -39,6 +43,63 @@ const QuizPlay = () => {
   const rightRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [lineCoords, setLineCoords] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login to take this quiz.",
+          variant: "destructive",
+        });
+        navigate("/admin/login");
+        return;
+      }
+      setStudentName(profile?.name || user.email || "Student");
+    }
+
+    const loadQuiz = async () => {
+      setIsLoading(true);
+      if (quizId) {
+        try {
+          const docRef = doc(db, "quizzes", quizId);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const found = docSnap.data();
+            // Deduplicate questions just in case the DB has duplicates
+            if (found.questions) {
+              const uniqueQuestions = Array.from(
+                new Map(found.questions.map((q: any) => [q.question.trim().toLowerCase(), q])).values()
+              );
+              found.questions = uniqueQuestions;
+              found.questionCount = uniqueQuestions.length;
+            }
+            setQuiz(found);
+            setTimeLeft(found.timer);
+          } else {
+            toast({
+              title: "Error",
+              description: "Quiz not found",
+              variant: "destructive",
+            });
+            navigate("/quizzes");
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      }
+      setIsLoading(false);
+    };
+
+    if (!authLoading) {
+      loadQuiz();
+    }
+  }, [quizId, navigate, toast, user, profile, authLoading]);
 
   useEffect(() => {
     const handleViolation = () => {
@@ -59,7 +120,9 @@ const QuizPlay = () => {
             total: quiz?.questions.length * 10 || 100,
             details: [],
             quizTitle: quiz?.title || "Assessment",
-            isCheated: true
+            isCheated: true,
+            teacherId: quiz?.teacherId,
+            teacherName: quiz?.teacherName
           }));
           navigate(`/quiz/${quizId}/result`);
         }, 100);
@@ -69,36 +132,6 @@ const QuizPlay = () => {
     document.addEventListener("visibilitychange", handleViolation);
     return () => document.removeEventListener("visibilitychange", handleViolation);
   }, [toast, navigate, quizId, quiz]);
-
-  useEffect(() => {
-    const name = sessionStorage.getItem("studentName");
-    if (!name) {
-      navigate(`/quiz/${quizId}`);
-      return;
-    }
-    setStudentName(name);
-
-    const loadQuiz = async () => {
-      setIsLoading(true);
-      if (quizId) {
-        const found = await getQuizById(quizId);
-        if (found) {
-          setQuiz(found);
-          setTimeLeft(found.timer);
-        } else {
-          toast({
-            title: "Error",
-            description: "Quiz not found",
-            variant: "destructive",
-          });
-          navigate("/quizzes");
-        }
-      }
-      setIsLoading(false);
-    };
-
-    loadQuiz();
-  }, [quizId, navigate, toast]);
 
   useEffect(() => {
     if (quiz) {
@@ -240,7 +273,9 @@ const QuizPlay = () => {
       score,
       total: totalPoints,
       details,
-      quizTitle: quiz.title
+      quizTitle: quiz.title,
+      teacherId: quiz.teacherId,
+      teacherName: quiz.teacherName
     }));
 
     navigate(`/quiz/${quizId}/result`);

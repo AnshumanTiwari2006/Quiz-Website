@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Brain, Clock, FileQuestion, ArrowRight, Home, Filter, Sparkles, BookOpen, GraduationCap, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
 
@@ -18,8 +19,12 @@ const SUBJECTS = [
 
 const CLASSES = ["All Classes", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 const QuizList = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
@@ -29,21 +34,20 @@ const QuizList = () => {
   useEffect(() => {
     const loadAllQuizzes = async () => {
       setIsLoading(true);
-      const staticQuizzes = await fetchQuizzes();
+      try {
+        const q = query(collection(db, "quizzes"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const fetchedQuizzes = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Quiz[];
 
-      const stored = localStorage.getItem("quizzes");
-      const localQuizzes = stored ? JSON.parse(stored) : [];
-
-      // Combine them, avoiding duplicates by ID
-      const combined = [...staticQuizzes];
-      localQuizzes.forEach((lq: Quiz) => {
-        if (!combined.find(sq => sq.id === lq.id)) {
-          combined.push(lq);
-        }
-      });
-
-      setQuizzes(combined);
-      setIsLoading(false);
+        setQuizzes(fetchedQuizzes);
+      } catch (error: any) {
+        console.error("Error fetching quizzes:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadAllQuizzes();
@@ -136,13 +140,15 @@ const QuizList = () => {
             </div>
             <h2 className="text-2xl font-black mb-3 tracking-tight text-foreground">No Modules Found</h2>
             <p className="text-muted-foreground text-lg mb-10 font-medium">Try adjusting your filters or search criteria.</p>
-            <Button
-              onClick={() => { setSelectedSubject("All Subjects"); setSelectedClass("All Classes"); setSelectedTeacher("All Educators"); }}
-              variant="outline"
-              className="rounded-full px-10 h-14 font-bold border-2 border-secondary hover:bg-primary hover:text-white hover:border-primary transition-all text-foreground bg-transparent"
-            >
-              Reset Filters
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                onClick={() => { setSelectedSubject("All Subjects"); setSelectedClass("All Classes"); setSelectedTeacher("All Educators"); }}
+                variant="outline"
+                className="rounded-full px-10 h-14 font-bold border-2 border-secondary hover:bg-primary hover:text-white hover:border-primary transition-all text-foreground bg-transparent"
+              >
+                Reset Filters
+              </Button>
+            </div>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

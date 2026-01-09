@@ -17,29 +17,45 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+import { AuthProvider } from "./contexts/AuthContext";
+
+import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/create" element={<CreateQuiz />} />
-          <Route path="/admin/edit/:quizId" element={<CreateQuiz />} />
-          <Route path="/admin/quizzes" element={<ManageQuizzes />} />
-          <Route path="/quizzes" element={<QuizList />} />
-          <Route path="/quiz/:quizId" element={<QuizEntry />} />
-          <Route path="/quiz/:quizId/play" element={<QuizPlay />} />
-          <Route path="/quiz/:quizId/result" element={<QuizResult />} />
-          <Route path="/contact" element={<Contact />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/quizzes" element={<QuizList />} />
+
+            {/* General Protected Routes (Login required) */}
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEntry /></ProtectedRoute>} />
+            <Route path="/quiz/:quizId/play" element={<ProtectedRoute><QuizPlay /></ProtectedRoute>} />
+            <Route path="/quiz/:quizId/result" element={<ProtectedRoute><QuizResult /></ProtectedRoute>} />
+
+            {/* Teacher Only Protected Routes */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute requireTeacher><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/create" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
+            <Route path="/admin/edit/:quizId" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
+            <Route path="/admin/quizzes" element={<ProtectedRoute requireTeacher><ManageQuizzes /></ProtectedRoute>} />
+
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
