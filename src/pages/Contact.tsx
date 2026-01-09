@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, ArrowLeft, Mail, Sparkles, Send, Zap, ShieldCheck } from "lucide-react";
+import { Mail, Sparkles, Send, Zap, ShieldCheck } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const Contact = () => {
     const navigate = useNavigate();
 
     const openGmail = () => {
-        const subject = encodeURIComponent("Elite Quizzz - Support Request");
+        const subject = encodeURIComponent("Scholar Synergy - Support Request");
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=anshumantiwari2006@gmail.com&su=${subject}`;
         const mailtoUrl = `mailto:anshumantiwari2006@gmail.com?subject=${subject}`;
 
@@ -19,28 +20,7 @@ const Contact = () => {
 
     return (
         <div className="min-h-screen bg-background text-foreground pb-20">
-            {/* Header */}
-            <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
-                            <Brain className="w-6 h-6 text-primary-foreground" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold tracking-tight text-foreground">Contact Center</h1>
-                            <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Direct Communication Hub</p>
-                        </div>
-                    </div>
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/')}
-                        className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-                    >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Return
-                    </Button>
-                </div>
-            </header>
+            <Navbar />
 
             <main className="max-w-4xl mx-auto px-6 py-16">
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">

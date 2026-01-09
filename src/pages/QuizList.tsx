@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Brain, Clock, FileQuestion, ArrowRight, Home, Filter, Sparkles, BookOpen, GraduationCap, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Navbar from "@/components/Navbar";
 
 import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
 
@@ -59,41 +60,11 @@ const QuizList = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Header - Matching Landing Page Header */}
-      <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Assessment Library</h1>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Knowledge Inventory</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/contact')}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              Contact Us
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Home
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-6 py-12">
         {/* Selection / Filter Panel */}
-        <Card className="p-8 rounded-[2.5rem] border-0 bg-secondary/30 shadow-soft ring-1 ring-border/50 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+        <Card className="p-5 md:p-8 rounded-[2.5rem] border-0 bg-secondary/30 shadow-soft ring-1 ring-border/50 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="flex items-center gap-2 mb-6 ml-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80">Customize Your Workspace</h2>
@@ -159,7 +130,7 @@ const QuizList = () => {
             <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground animate-pulse">Scanning Registry...</p>
           </div>
         ) : filteredQuizzes.length === 0 ? (
-          <Card className="p-20 rounded-[3rem] shadow-soft text-center border-0 bg-background ring-1 ring-border/50 max-w-2xl mx-auto">
+          <Card className="p-8 md:p-20 rounded-[3rem] shadow-soft text-center border-0 bg-background ring-1 ring-border/50 max-w-2xl mx-auto">
             <div className="w-20 h-20 bg-secondary rounded-[2rem] flex items-center justify-center mx-auto mb-8">
               <Filter className="w-10 h-10 text-primary/30" />
             </div>
@@ -181,7 +152,7 @@ const QuizList = () => {
                 className="group overflow-hidden rounded-[2.5rem] border-0 bg-background shadow-soft hover:shadow-strong transition-all cursor-pointer ring-1 ring-border/50 relative"
                 onClick={() => navigate(`/quiz/${quiz.id}`)}
               >
-                <div className="p-8 pb-10">
+                <div className="p-6 md:p-8 pb-10">
                   <div className="flex justify-between items-start mb-8">
                     <div className="w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center group-hover:bg-primary transition-all duration-300">
                       <Brain className="w-6 h-6 text-primary group-hover:text-white transition-colors" />

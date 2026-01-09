@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Brain, Plus, List, LogOut, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchQuizzes } from "@/lib/quizLoader";
+import Navbar from "@/components/Navbar";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -54,37 +55,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header - Matching Landing Page Header */}
-      <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Admin Dashboard</h1>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Administrator Access</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/contact')}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              Contact Us
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-5xl mx-auto px-6 py-12">
         {/* Stats Grid - Floral White (bg-background) */}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, Trash2, ArrowLeft, FileQuestion, Download, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
+import Navbar from "@/components/Navbar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,7 +62,7 @@ const ManageQuizzes = () => {
     if (!deleteId) return;
 
     const updated = quizzes.filter(q => q.id !== deleteId);
-    localStorage.setItem("quizzes", JSON.stringify(updated));
+    localStorage.setItem("quizzes", JSON.stringify(updated.filter(q => !q.isStatic)));
     setQuizzes(updated);
     setDeleteId(null);
 
@@ -90,47 +91,29 @@ const ManageQuizzes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header - Matching Landing Page Header */}
-      <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Manage Quizzes</h1>
-              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70">Inventory Control</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/contact')}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              Contact Us
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/admin/dashboard')}
-              className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              onClick={exportToJson}
-              className="rounded-full bg-primary text-primary-foreground shadow-soft font-bold text-xs uppercase tracking-widest px-6 h-10 hover:scale-[1.02] transition-all border-0"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export JSON
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      <Navbar
+        extraLinks={[
+          { label: "Export JSON", onClick: exportToJson, icon: Download }
+        ]}
+      />
 
       <main className="max-w-5xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Manage Quizzes</h2>
+            <p className="text-sm text-muted-foreground font-medium">Inventory Control and Registry Management</p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/admin/dashboard')}
+            className="rounded-full font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6 hidden md:flex"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
+
         {quizzes.length === 0 ? (
           <Card className="p-12 rounded-[2.5rem] shadow-soft text-center border-0 bg-background ring-1 ring-border/50 max-w-2xl mx-auto box-content">
             <FileQuestion className="w-16 h-16 text-primary/20 mx-auto mb-6" />

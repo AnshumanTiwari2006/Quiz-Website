@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft, ArrowRight } fro
 import { useToast } from "@/hooks/use-toast";
 import FlashcardComponent from "@/components/FlashcardComponent";
 import { getQuizById } from "@/lib/quizLoader";
+import Navbar from "@/components/Navbar";
 
 const shuffleArray = (array: any[]) => {
   const newArr = [...array];
@@ -260,60 +261,42 @@ const QuizPlay = () => {
   const isLastQuestion = currentIndex === quiz.questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header - Silver Bar */}
-      <header className="py-6 px-4 md:px-6 border-b border-border/50 bg-secondary backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-background pb-20">
+      <Navbar />
+
+      {/* Quiz Progress Bar & Header */}
+      <div className="border-b border-border/10 bg-secondary/30 backdrop-blur-md sticky top-[73px] z-40 py-4 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
-                <Brain className="w-6 h-6 text-primary-foreground" />
-              </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-foreground truncate max-w-[180px] md:max-w-md">{quiz.title}</h1>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-0.5">
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    Student: {studentName}
-                  </p>
-                  {quiz.subject && (
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
-                      {quiz.subject}
-                    </p>
-                  )}
-                  {quiz.class && (
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
-                      Class: {quiz.class}
-                    </p>
-                  )}
-                  {quiz.teacherName && (
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary/60 border-l border-border pl-4">
-                      By: {quiz.teacherName}
-                    </p>
-                  )}
-                </div>
+                <h2 className="text-lg font-bold tracking-tight text-foreground truncate max-w-[150px] md:max-w-md">{quiz.title}</h2>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  Student: {studentName}
+                </p>
               </div>
             </div>
             {quiz.timer > 0 && (
               <Badge
                 variant={timeLeft < 60 ? "destructive" : "secondary"}
-                className={`rounded-full px-5 py-2 font-mono text-sm border-0 ${timeLeft < 60 ? 'animate-pulse bg-destructive text-white' : 'bg-primary/10 text-primary'}`}
+                className={`rounded-full px-4 py-1.5 font-mono text-xs border-0 ${timeLeft < 60 ? 'animate-pulse bg-destructive text-white' : 'bg-primary/10 text-primary'}`}
               >
-                <Clock className="mr-2 h-4 w-4" />
+                <Clock className="mr-2 h-3.5 w-3.5" />
                 {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
               </Badge>
             )}
           </div>
-          <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white/30 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-primary h-full rounded-full transition-all duration-700 ease-in-out"
               style={{ width: `${((currentIndex + 1) / quiz.questions.length) * 100}%` }}
             />
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-6 py-12 max-w-7xl">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-8 flex justify-between items-center">
           <Badge variant="outline" className="rounded-full px-4 py-1.5 border-border/40 bg-white/50 font-bold text-[10px] uppercase tracking-widest text-foreground">
             Question {currentIndex + 1} of {quiz.questions.length}
@@ -336,18 +319,18 @@ const QuizPlay = () => {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-20 items-start justify-between">
+        <div className="flex flex-col lg:flex-row gap-12 items-start justify-between mb-12">
           <div className="flex-1 w-full max-w-3xl min-w-0">
-            <div className="mb-12">
+            <div className="">
               {currentQuestion.type === "flashcard" ? (
                 <FlashcardComponent
                   front={currentQuestion.front || ""}
                   back={currentQuestion.back || ""}
                 />
               ) : (
-                <Card className="p-10 md:p-14 rounded-[2.5rem] border-0 bg-secondary shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500 border border-white/50 flex flex-col min-h-[500px]">
-                  <div className="mb-6 text-center md:text-left">
-                    <h2 className="text-lg md:text-xl font-bold tracking-tight leading-snug text-foreground break-words">{currentQuestion.question}</h2>
+                <Card className="p-10 md:p-14 rounded-[2.5rem] border-0 bg-secondary/20 shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col min-h-[400px]">
+                  <div className="mb-10">
+                    <h3 className="text-xl md:text-2xl font-bold tracking-tight leading-snug text-foreground break-words">{currentQuestion.question}</h3>
                   </div>
 
                   {(currentQuestion.type === "mcq" || currentQuestion.type === "multi_mcq") && currentQuestion.options && (
@@ -391,9 +374,6 @@ const QuizPlay = () => {
                           </Button>
                         );
                       })}
-                      {currentQuestion.type === "multi_mcq" && (
-                        <p className="text-center text-[8px] uppercase font-bold tracking-widest text-muted-foreground mt-4 opacity-40">Multiple Answers Possible</p>
-                      )}
                     </div>
                   )}
 
@@ -416,7 +396,7 @@ const QuizPlay = () => {
                   )}
 
                   {currentQuestion.type === "oneword" && (
-                    <div className="relative group max-w-2xl mx-auto">
+                    <div className="relative group max-w-2xl mx-auto w-full">
                       <input
                         type="text"
                         autoFocus
@@ -425,9 +405,6 @@ const QuizPlay = () => {
                         placeholder="Type your answer..."
                         className="w-full p-8 bg-white/50 border-2 border-white/80 rounded-[2rem] text-2xl font-bold focus:outline-none focus:border-primary focus:bg-white transition-all shadow-inner placeholder:text-muted-foreground/30 text-center text-foreground"
                       />
-                      <div className="mt-8 flex justify-center opacity-30">
-                        <Brain className="w-8 h-8 animate-pulse text-primary" />
-                      </div>
                     </div>
                   )}
 
@@ -483,9 +460,6 @@ const QuizPlay = () => {
                       </div>
 
                       <div className="bg-white/30 rounded-[2rem] p-8 border border-white/50">
-                        <h4 className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-6 flex items-center gap-2">
-                          Active Connections
-                        </h4>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(answers[currentQuestion.id] || {}).map(([left, right]) => (
                             <Badge key={left} className="pl-5 pr-2 py-3 bg-white text-primary border border-primary/10 rounded-full shadow-sm flex items-center gap-4">
@@ -515,7 +489,7 @@ const QuizPlay = () => {
           </div>
 
           {/* Navigation Sidebar */}
-          <aside className="w-full lg:w-72 shrink-0 space-y-6 lg:sticky lg:top-32">
+          <aside className="w-full lg:w-72 shrink-0 space-y-6 lg:sticky lg:top-[180px]">
             <Card className="p-6 rounded-[2rem] border-0 bg-secondary/50 shadow-soft ring-1 ring-border/30">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6">Quiz Navigator</h3>
               <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-4 gap-2">
@@ -561,23 +535,23 @@ const QuizPlay = () => {
           </aside>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-12">
           <Button
             variant="ghost"
             onClick={() => setCurrentIndex(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className="rounded-full px-10 h-16 text-foreground hover:bg-primary hover:text-white transition-all font-bold"
+            className="w-full sm:w-auto rounded-full px-8 sm:px-10 h-14 sm:h-16 text-foreground hover:bg-primary hover:text-white transition-all font-bold text-sm sm:text-base order-2 sm:order-1"
           >
             <ChevronLeft className="mr-3 h-5 w-5" />
             Previous
           </Button>
 
-          <div className="flex-1" />
+          <div className="hidden sm:block flex-1" />
 
           {isLastQuestion ? (
             <Button
               onClick={handleSubmit}
-              className="bg-primary text-primary-foreground rounded-full px-12 h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-xl font-bold"
+              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-lg sm:text-xl font-bold order-1 sm:order-2"
             >
               Finish Quiz
               <CheckCircle2 className="ml-3 h-6 w-6" />
@@ -585,7 +559,7 @@ const QuizPlay = () => {
           ) : (
             <Button
               onClick={() => setCurrentIndex(currentIndex + 1)}
-              className="bg-primary text-primary-foreground rounded-full px-12 h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-xl font-bold"
+              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-lg sm:text-xl font-bold order-1 sm:order-2"
             >
               Next
               <ChevronRight className="ml-3 h-6 w-6" />
@@ -597,6 +571,4 @@ const QuizPlay = () => {
   );
 };
 
-
 export default QuizPlay;
-

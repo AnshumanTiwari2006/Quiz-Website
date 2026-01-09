@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Trophy, Home, RotateCcw, CheckCircle2, XCircle, Download, Award } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import confetti from "canvas-confetti";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -94,7 +95,9 @@ const QuizResult = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background py-20 px-6">
+    <div className="min-h-screen bg-background pb-20">
+      <Navbar />
+
       {/* Hidden Certificate Template for PDF generation */}
       <div className="fixed left-[-9999px] top-0">
         <div
@@ -132,7 +135,7 @@ const QuizResult = () => {
               </div>
               <div className="flex flex-col items-center justify-center">
                 <Brain className="w-10 h-10 text-[#eb5e28]/50" />
-                <span className="text-[8px] font-bold text-[#403d39]/40 uppercase tracking-widest mt-2">Elite Quizzz Platform</span>
+                <span className="text-[8px] font-bold text-[#403d39]/40 uppercase tracking-widest mt-2">Scholar Synergy Platform</span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[9px] uppercase font-bold text-[#403d39]/60 tracking-[0.3em] mb-1">Date Issued</span>
@@ -143,7 +146,7 @@ const QuizResult = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-16 animate-in fade-in duration-700">
+      <main className="max-w-4xl mx-auto px-6 py-16 space-y-16 animate-in fade-in duration-700">
         <Card className="p-12 md:p-20 rounded-[3rem] border-0 bg-background shadow-strong relative overflow-hidden ring-1 ring-border/50">
           <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full -mr-20 -mt-20 blur-3xl" />
 
@@ -154,12 +157,12 @@ const QuizResult = () => {
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60 mb-4">
               {isCheated ? 'Security Breach Detected' : 'Assessment Module Finalized'}
             </p>
-            <h1 className={`text-5xl font-bold mb-4 tracking-tight ${isCheated ? 'text-destructive' : 'text-foreground'}`}>
-              {isCheated ? 'You Tried to Cheat!' : 'Mission Accomplished'}
+            <h1 className={`text-4xl md:text-5xl font-bold mb-4 tracking-tight ${isCheated ? 'text-destructive' : 'text-foreground'}`}>
+              {isCheated ? 'Violation Detected' : 'Mission Accomplished'}
             </h1>
             <p className="text-lg text-muted-foreground font-medium max-w-lg mx-auto leading-relaxed">
               {isCheated
-                ? "Academic integrity is paramount. This session has been terminated due to a tab-switching violation."
+                ? "Academic integrity is paramount. This session was terminated due to a tab-switching violation."
                 : `Evaluation complete for ${quizTitle}.`
               }
             </p>
@@ -168,7 +171,7 @@ const QuizResult = () => {
           <div className="grid md:grid-cols-2 gap-10 items-center mb-12 relative z-10">
             <div className={`p-10 bg-secondary/20 rounded-[2.5rem] text-center border-0 ring-1 ring-border/50 shadow-soft`}>
               <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Performance Index</div>
-              <div className="text-7xl font-black text-primary mb-4 tracking-tighter">{percentage}%</div>
+              <div className="text-6xl md:text-7xl font-black text-primary mb-4 tracking-tighter">{percentage}%</div>
               <div className="inline-flex items-center px-5 py-2 bg-background rounded-full text-[10px] font-bold text-foreground ring-1 ring-border/50 shadow-sm">
                 {score} / {total} Total Credits
               </div>
@@ -206,7 +209,7 @@ const QuizResult = () => {
                   <div className="p-4 bg-secondary/10 rounded-2xl border-2 border-dashed border-border/20 flex flex-col items-center justify-center text-center">
                     <p className="text-[7px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Locked</p>
                     <p className="text-[8px] font-bold text-muted-foreground/60 leading-tight">
-                      {isCheated ? "Cheating Detected" : "Score 60%+ to unlock"}
+                      {isCheated ? "Privacy Violation" : "Score 60%+ to unlock"}
                     </p>
                   </div>
                 )}
@@ -237,7 +240,7 @@ const QuizResult = () => {
         {/* Detailed Breakdown */}
         {!isCheated && percentage >= 61 && (
           <div className="space-y-6">
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-4">Detailed Item Analysis</h2>
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-4">Itemized Analysis</h2>
             <div className="grid gap-4">
               {details.map((item: any, idx: number) => (
                 <Card key={idx} className="p-6 rounded-3xl border-0 bg-background shadow-soft flex flex-col gap-4 ring-1 ring-border/50 relative overflow-hidden">
@@ -261,19 +264,19 @@ const QuizResult = () => {
 
                   <div className="space-y-4">
                     <p className="font-bold text-lg tracking-tight text-foreground line-clamp-2" title={item.question}>
-                      {item.question.length > 100 ? item.question.substring(0, 100) + "..." : item.question}
+                      {item.question}
                     </p>
 
                     <div className="grid md:grid-cols-2 gap-3">
                       <div className="p-4 rounded-xl bg-secondary/10 ring-1 ring-border/10">
-                        <p className="text-[8px] uppercase font-bold text-muted-foreground opacity-50 mb-1 tracking-widest">Your Answer</p>
+                        <p className="text-[8px] uppercase font-bold text-muted-foreground opacity-50 mb-1 tracking-widest">Candidate Choice</p>
                         <p className={`font-bold text-sm ${item.isCorrect ? "text-green-600" : "text-destructive"}`}>
                           {item.userAnswer || "No Response"}
                         </p>
                       </div>
                       {!item.isCorrect && (
                         <div className="p-4 rounded-xl bg-green-500/5 ring-1 ring-green-500/10">
-                          <p className="text-[8px] uppercase font-bold text-green-600/50 mb-1 tracking-widest">Corrective Measure</p>
+                          <p className="text-[8px] uppercase font-bold text-green-600/50 mb-1 tracking-widest">Expected Result</p>
                           <p className="font-bold text-sm text-green-600">{item.correctAnswer}</p>
                         </div>
                       )}
@@ -284,17 +287,7 @@ const QuizResult = () => {
             </div>
           </div>
         )}
-
-        <div className="text-center pt-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 hover:text-primary transition-all rounded-full"
-          >
-            Terminate Session
-          </Button>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

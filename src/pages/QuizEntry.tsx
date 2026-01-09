@@ -60,7 +60,7 @@ const QuizEntry = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg p-12 rounded-[2.5rem] border-0 bg-white shadow-strong ring-1 ring-border/50 animate-in fade-in zoom-in duration-500">
+      <Card className="w-full max-w-lg p-6 md:p-12 rounded-[2.5rem] border-0 bg-white shadow-strong ring-1 ring-border/50 animate-in fade-in zoom-in duration-500">
         <div className="text-center mb-10">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft">
             <Brain className="w-8 h-8 text-primary-foreground" />
@@ -70,14 +70,14 @@ const QuizEntry = () => {
         </div>
 
         <div className="mb-10 p-6 bg-primary/5 rounded-2xl border border-primary/10">
-          <div className="grid grid-cols-2 gap-8 text-center divide-x divide-primary/10">
-            <div>
-              <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Total Items</p>
-              <p className="text-3xl font-black text-primary">{quiz.questionCount}</p>
+          <div className="grid grid-cols-2 gap-4 md:gap-8 text-center divide-x divide-primary/10">
+            <div className="px-2">
+              <p className="text-[9px] md:text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Total Items</p>
+              <p className="text-2xl md:text-3xl font-black text-primary">{quiz.questionCount}</p>
             </div>
-            <div>
-              <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Allocated Time</p>
-              <p className="text-3xl font-black text-primary">
+            <div className="px-2">
+              <p className="text-[9px] md:text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 mb-2">Allocated Time</p>
+              <p className="text-2xl md:text-3xl font-black text-primary">
                 {quiz.timer > 0 ? `${Math.floor(quiz.timer / 60)}m` : "∞"}
               </p>
             </div>
