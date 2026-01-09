@@ -3,11 +3,24 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Users, Brain, Zap } from "lucide-react";
-
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
+
+  const handlePrimaryAction = () => {
+    if (!user) {
+      navigate('/admin/login');
+      return;
+    }
+    if (profile?.role === 'teacher') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/quizzes');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,19 +42,21 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              onClick={() => navigate('/quizzes')}
+              onClick={handlePrimaryAction}
               className="bg-primary text-primary-foreground rounded-full px-8 py-6 text-base font-bold shadow-soft hover:bg-secondary hover:text-primary transition-all border-0"
             >
-              Explore Library
+              {!user ? "Get Started" : profile?.role === 'teacher' ? "Go to Dashboard" : "Take a Quiz"}
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-              className="rounded-full px-8 py-6 text-base border-2 border-secondary bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold"
-            >
-              Meet the Creator
-            </Button>
+            {!user && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate('/signup')}
+                className="rounded-full px-8 py-6 text-base border-2 border-secondary bg-transparent text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold"
+              >
+                Join as Teacher
+              </Button>
+            )}
           </div>
         </div>
 

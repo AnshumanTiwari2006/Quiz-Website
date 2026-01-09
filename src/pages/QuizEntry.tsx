@@ -7,33 +7,53 @@ import { Label } from "@/components/ui/label";
 import { Brain, User, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import { getQuizById } from "@/lib/quizLoader";
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const QuizEntry = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, loading: authLoading } = useAuth();
   const [name, setName] = useState("");
   const [quiz, setQuiz] = useState<any>(null);
 
   useEffect(() => {
+    if (!authLoading && user) {
+      setName(profile?.name || user.email || "");
+    }
+
     const loadQuiz = async () => {
       if (quizId) {
-        const found = await getQuizById(quizId);
-        if (found) {
-          setQuiz(found);
-        } else {
+        try {
+          const docRef = doc(db, "quizzes", quizId);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            setQuiz(docSnap.data());
+          } else {
+            toast({
+              title: "Quiz Not Found",
+              description: "This quiz doesn't exist",
+              variant: "destructive",
+            });
+            navigate("/quizzes");
+          }
+        } catch (error: any) {
           toast({
-            title: "Quiz Not Found",
-            description: "This quiz doesn't exist",
+            title: "Error",
+            description: error.message,
             variant: "destructive",
           });
-          navigate("/quizzes");
         }
       }
     };
-    loadQuiz();
-  }, [quizId, navigate, toast]);
+
+    if (!authLoading) {
+      loadQuiz();
+    }
+  }, [quizId, navigate, toast, user, profile, authLoading]);
 
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();

@@ -10,7 +10,9 @@ import { Brain, Plus, Trash2, ArrowLeft, Upload, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Papa from "papaparse";
-import { getQuizById } from "@/lib/quizLoader";
+import { useAuth } from "@/contexts/AuthContext";
+import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface Question {
   id: string;
@@ -36,6 +38,8 @@ const CLASSES = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", 
 const CreateQuiz = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, loading: authLoading } = useAuth();
+
   const [title, setTitle] = useState("");
   const [quizType, setQuizType] = useState<"mcq" | "oneword" | "flashcard" | "mixed" | "truefalse" | "match" | "multi_mcq">("mcq");
   const [timer, setTimer] = useState(0);
@@ -43,40 +47,64 @@ const CreateQuiz = () => {
   const [targetClass, setTargetClass] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { quizId } = useParams();
   const isEditing = !!quizId;
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (!isLoggedIn) {
-      navigate("/admin/login");
+    if (!authLoading) {
+      if (!user || profile?.role !== "teacher") {
+        toast({
+          title: "Access Denied",
+          description: "Only teachers can create or edit quizzes.",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      // Auto-fill teacher name if not set
+      if (!teacherName && profile?.name) {
+        setTeacherName(profile.name);
+      }
     }
 
     if (isEditing) {
       const loadQuizData = async () => {
-        const quiz = await getQuizById(quizId as string);
-        if (quiz) {
-          setTitle(quiz.title);
-          setQuizType(quiz.type as any);
-          setTimer(quiz.timer);
-          setQuestions(quiz.questions || []);
-          setSubject(quiz.subject || "");
-          setTargetClass(quiz.class || "");
-          setTeacherName(quiz.teacherName || "");
-        } else {
+        try {
+          const docRef = doc(db, "quizzes", quizId as string);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const quiz = docSnap.data();
+            setTitle(quiz.title);
+            setQuizType(quiz.type as any);
+            setTimer(quiz.timer);
+            setQuestions(quiz.questions || []);
+            setSubject(quiz.subject || "");
+            setTargetClass(quiz.class || "");
+            setTeacherName(quiz.teacherName || "");
+          } else {
+            toast({
+              title: "Quiz not found",
+              description: "The quiz you are trying to edit does not exist",
+              variant: "destructive",
+            });
+            navigate("/admin/quizzes");
+          }
+        } catch (error: any) {
           toast({
-            title: "Quiz not found",
-            description: "The quiz you are trying to edit does not exist",
+            title: "Error",
+            description: error.message,
             variant: "destructive",
           });
-          navigate("/admin/quizzes");
         }
       };
       loadQuizData();
     }
-  }, [navigate, quizId, isEditing, toast]);
+  }, [navigate, quizId, isEditing, toast, user, profile, authLoading, teacherName]);
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -100,33 +128,45 @@ const CreateQuiz = () => {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const newQuestions: Question[] = results.data.map((row: any, index: number) => {
-          const type = (row.type || "mcq").toLowerCase().trim() as any;
-          const q: Question = {
-            id: (Date.now() + index).toString(),
-            type: ["mcq", "oneword", "flashcard", "truefalse", "match", "multi_mcq"].includes(type) ? type : "mcq",
-            question: row.question || "",
-            answer: row.answer || "",
-            points: parseInt(row.points) || 10,
-          };
+        const newQuestions: Question[] = results.data
+          .map((row: any, index: number) => {
+            const type = (row.type || "mcq").toLowerCase().trim() as any;
+            const q: Question = {
+              id: (Date.now() + index).toString(),
+              type: ["mcq", "oneword", "flashcard", "truefalse", "match", "multi_mcq"].includes(type) ? type : "mcq",
+              question: (row.question || "").trim(),
+              answer: (row.answer || "").trim(),
+              points: parseInt(row.points) || 10,
+            };
 
-          if (q.type === "mcq" || q.type === "multi_mcq") {
-            q.options = row.options ? row.options.split("|").map((opt: string) => opt.trim()) : ["", "", "", ""];
-          } else if (q.type === "truefalse") {
-            q.options = ["True", "False"];
-          } else if (q.type === "flashcard") {
-            q.front = row.question || "";
-            q.back = row.answer || "";
-          }
+            if (q.type === "mcq" || q.type === "multi_mcq") {
+              q.options = row.options ? row.options.split("|").map((opt: string) => opt.trim()) : ["", "", "", ""];
+            } else if (q.type === "truefalse") {
+              q.options = ["True", "False"];
+            } else if (q.type === "flashcard") {
+              q.front = q.question;
+              q.back = q.answer;
+            }
 
-          return q;
-        });
+            return q;
+          })
+          .filter((newQ) => {
+            // Only add if not already in the list (by question text)
+            return !questions.some(q => q.question.toLowerCase().trim() === newQ.question.toLowerCase().trim());
+          });
 
-        setQuestions([...questions, ...newQuestions]);
-        toast({
-          title: "Import Success",
-          description: `Successfully imported ${newQuestions.length} questions.`,
-        });
+        if (newQuestions.length === 0) {
+          toast({
+            title: "Import Information",
+            description: "No new unique questions found in CSV.",
+          });
+        } else {
+          setQuestions([...questions, ...newQuestions]);
+          toast({
+            title: "Import Success",
+            description: `Successfully imported ${newQuestions.length} unique questions.`,
+          });
+        }
         if (fileInputRef.current) fileInputRef.current.value = "";
       },
       error: (error) => {
@@ -159,7 +199,7 @@ const CreateQuiz = () => {
     setQuestions(questions.filter(q => q.id !== id));
   };
 
-  const saveQuiz = () => {
+  const saveQuiz = async () => {
     if (!title || questions.length === 0) {
       toast({
         title: "Missing Information",
@@ -169,34 +209,44 @@ const CreateQuiz = () => {
       return;
     }
 
+    setSaving(true);
     const quizData = {
-      id: isEditing ? quizId : Date.now().toString(),
       title,
       type: quizType,
       timer,
       subject,
       class: targetClass,
       teacherName,
+      teacherId: user?.uid,
       questionCount: questions.length,
       questions,
+      updatedAt: new Date().toISOString(),
     };
 
-    const stored = localStorage.getItem("quizzes");
-    let quizzes = stored ? JSON.parse(stored) : [];
+    try {
+      if (isEditing) {
+        await updateDoc(doc(db, "quizzes", quizId as string), quizData);
+      } else {
+        await addDoc(collection(db, "quizzes"), {
+          ...quizData,
+          createdAt: new Date().toISOString(),
+        });
+      }
 
-    if (isEditing) {
-      quizzes = quizzes.map((q: any) => q.id === quizId ? quizData : q);
-    } else {
-      quizzes.push(quizData);
+      toast({
+        title: "Success!",
+        description: isEditing ? "Quiz updated successfully" : "Quiz created successfully",
+      });
+      navigate("/admin/quizzes");
+    } catch (error: any) {
+      toast({
+        title: "Failed to save",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
-
-    localStorage.setItem("quizzes", JSON.stringify(quizzes));
-
-    toast({
-      title: "Success!",
-      description: isEditing ? "Quiz updated successfully" : "Quiz created successfully",
-    });
-    navigate("/admin/quizzes");
   };
 
   return (

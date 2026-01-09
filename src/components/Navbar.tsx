@@ -1,9 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, Menu, LogOut, Home, BookOpen, MessageSquare, LayoutDashboard, LucideIcon } from "lucide-react";
+import {
+    Brain, Menu, LogOut, Home, BookOpen,
+    MessageSquare, LayoutDashboard, LucideIcon,
+    User, History, Settings
+} from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavLink {
     label: string;
@@ -19,17 +32,14 @@ interface NavbarProps {
 const Navbar = ({ extraLinks = [] }: NavbarProps) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isAdmin, setIsAdmin] = useState(false);
+    const { user, profile, logout } = useAuth();
 
-    useEffect(() => {
-        setIsAdmin(!!localStorage.getItem("adminLoggedIn"));
-    }, [location]);
-
-    const handleLogout = () => {
-        localStorage.removeItem("adminLoggedIn");
-        setIsAdmin(false);
+    const handleLogout = async () => {
+        await logout();
         navigate("/");
     };
+
+    const isAdmin = profile?.role === "teacher";
 
     const navLinks: NavLink[] = [
         { label: "Home", path: "/", icon: Home },
@@ -85,30 +95,62 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                             {link.label}
                         </Button>
                     ))}
-                    {isAdmin && (
-                        <Button
-                            variant="ghost"
-                            onClick={handleLogout}
-                            className="rounded-full font-bold text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all px-4"
-                        >
-                            <LogOut className="h-3.5 w-3.5 mr-2" />
-                            Sign Out
-                        </Button>
-                    )}
+
+                    {user ? (
+                        <div className="flex items-center gap-2 ml-2 pl-4 border-l border-border/20">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-xs hover:bg-primary hover:text-white transition-all shadow-soft outline-none">
+                                        {profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56 rounded-[2rem] p-2 border-0 shadow-strong ring-1 ring-border/50 bg-background/95 backdrop-blur-md" align="end">
+                                    <DropdownMenuLabel className="px-4 py-3 flex flex-col">
+                                        <span className="text-sm font-bold text-foreground truncate">{profile?.name}</span>
+                                        <span className="text-[10px] text-muted-foreground font-medium truncate italic">{user.email}</span>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-border/50 mx-2" />
+                                    <DropdownMenuItem
+                                        onClick={() => navigate('/profile')}
+                                        className="rounded-xl h-10 px-4 cursor-pointer focus:bg-primary/10 focus:text-primary font-bold text-[10px] uppercase tracking-widest gap-3 transition-colors"
+                                    >
+                                        <User className="w-3.5 h-3.5" /> Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            navigate('/profile');
+                                            setTimeout(() => {
+                                                document.getElementById('history')?.scrollIntoView({ behavior: 'smooth' });
+                                            }, 100);
+                                        }}
+                                        className="rounded-xl h-10 px-4 cursor-pointer focus:bg-primary/10 focus:text-primary font-bold text-[10px] uppercase tracking-widest gap-3 transition-colors"
+                                    >
+                                        <History className="w-3.5 h-3.5" /> Quiz History
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="bg-border/50 mx-2" />
+                                    <DropdownMenuItem
+                                        onClick={handleLogout}
+                                        className="rounded-xl h-10 px-4 cursor-pointer focus:bg-destructive/10 focus:text-destructive font-bold text-[10px] uppercase tracking-widest gap-3 transition-colors"
+                                    >
+                                        <LogOut className="w-3.5 h-3.5" /> Sign Out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : null}
                 </div>
 
                 {/* Mobile Navigation */}
-                <div className="md:hidden flex items-center gap-2">
-                    {extraLinks.length > 0 && extraLinks.map((link) => (
-                        <Button
-                            key={link.label}
-                            size="icon"
-                            onClick={link.onClick}
-                            className="rounded-full bg-primary text-primary-foreground h-9 w-9 shadow-soft"
+                <div className="md:hidden flex items-center gap-3">
+                    {user && (
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="w-9 h-9 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-[10px] shadow-soft"
                         >
-                            <link.icon className="h-4 w-4" />
-                        </Button>
-                    ))}
+                            {profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                        </button>
+                    )}
+
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary group h-9 w-9">
@@ -181,7 +223,25 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                                     </>
                                 )}
 
-                                {isAdmin && (
+                                {user && (
+                                    <SheetClose asChild>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => {
+                                                navigate('/profile');
+                                                setTimeout(() => {
+                                                    document.getElementById('history')?.scrollIntoView({ behavior: 'smooth' });
+                                                }, 100);
+                                            }}
+                                            className="justify-start h-12 rounded-2xl font-bold text-xs uppercase tracking-widest text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all px-4"
+                                        >
+                                            <History className="h-4 w-4 mr-4" />
+                                            Quiz History
+                                        </Button>
+                                    </SheetClose>
+                                )}
+
+                                {user && (
                                     <SheetClose asChild>
                                         <Button
                                             variant="ghost"
