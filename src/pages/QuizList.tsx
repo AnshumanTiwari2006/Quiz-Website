@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +52,23 @@ const QuizList = () => {
 
     loadAllQuizzes();
   }, []);
+
+  const newQuizIds = useMemo(() => {
+    const subjectCounts: Record<string, number> = {};
+    const newIds = new Set<string>();
+
+    // Quizzes are ordered by createdAt desc from the query
+    quizzes.forEach((quiz) => {
+      const subject = quiz.subject || "General Knowledge";
+      if (!subjectCounts[subject]) subjectCounts[subject] = 0;
+      if (subjectCounts[subject] < 3) {
+        newIds.add(quiz.id);
+        subjectCounts[subject]++;
+      }
+    });
+
+    return newIds;
+  }, [quizzes]);
 
   const teachers = ["All Educators", ...Array.from(new Set(quizzes.map(q => q.teacherName).filter(Boolean)))];
 
@@ -158,6 +175,14 @@ const QuizList = () => {
                 className="group overflow-hidden rounded-[2.5rem] border-0 bg-background shadow-soft hover:shadow-strong transition-all cursor-pointer ring-1 ring-border/50 relative"
                 onClick={() => navigate(`/quiz/${quiz.id}`)}
               >
+                {newQuizIds.has(quiz.id) && (
+                  <div className="absolute top-6 right-6 z-10 pointer-events-none">
+                    <Badge className="bg-primary text-white border-0 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest animate-sparkle shadow-[0_0_20px_rgba(235,94,40,0.4)] flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 fill-white" />
+                      New
+                    </Badge>
+                  </div>
+                )}
                 <div className="p-6 md:p-8 pb-10">
                   <div className="flex justify-between items-start mb-8">
                     <div className="w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center group-hover:bg-primary transition-all duration-300">

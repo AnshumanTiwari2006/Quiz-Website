@@ -21,6 +21,10 @@ const Signup = () => {
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
     const [studentClass, setStudentClass] = useState("");
+    const [schoolName, setSchoolName] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [physicalAddress, setPhysicalAddress] = useState("");
+    const [customSubject, setCustomSubject] = useState("");
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
@@ -29,34 +33,44 @@ const Signup = () => {
 
     const from = location.state?.from?.pathname || null;
 
-    const subjects = ["Mathematics", "Science", "History", "English", "Geography", "Computer Science"];
-    const classes = ["6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+    const subjects = ["Mathematics", "Science", "History", "English", "Geography", "Computer Science", "Other"];
+    const classes = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        if (role === "teacher" && schoolCode !== "ABIC-2026") {
-            toast({
-                title: "Invalid Code",
-                description: "Only authorized teachers can sign up.",
-                variant: "destructive",
-            });
-            setLoading(false);
-            return;
+        if (role === "teacher") {
+            if (schoolCode !== "ABIC-2026") {
+                toast({ title: "Invalid Code", description: "Only authorized teachers can sign up.", variant: "destructive" });
+                setLoading(false);
+                return;
+            }
+            if (phoneNumber.length < 10 || selectedSubjects.length === 0 || selectedClasses.length === 0) {
+                toast({ title: "Missing Info", description: "Phone, Subjects, and Classes are mandatory for teachers.", variant: "destructive" });
+                setLoading(false);
+                return;
+            }
         }
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            const finalSubjects = selectedSubjects.includes("Other")
+                ? [...selectedSubjects.filter(s => s !== "Other"), customSubject]
+                : selectedSubjects;
+
             const profileData = {
                 uid: user.uid,
                 email,
                 name,
                 role,
+                school: schoolName,
+                phone: phoneNumber,
+                address: physicalAddress,
                 ...(role === "teacher"
-                    ? { subjects: selectedSubjects, classes: selectedClasses }
+                    ? { subjects: finalSubjects.filter(Boolean), classes: selectedClasses }
                     : { schoolClass: studentClass }),
                 createdAt: new Date().toISOString()
             };
@@ -90,13 +104,17 @@ const Signup = () => {
                     uid: user.uid,
                     email: user.email,
                     name: user.displayName || "Scholar",
-                    role: role, // Use selected role from toggle
-                    ...(role === "teacher"
-                        ? { subjects: selectedSubjects, classes: selectedClasses }
-                        : { schoolClass: studentClass }),
+                    role: role,
+                    school: schoolName,
+                    phone: phoneNumber,
+                    address: physicalAddress,
                     createdAt: new Date().toISOString()
                 };
                 await setDoc(doc(db, "users", user.uid), profileData);
+
+                toast({ title: "Welcome!", description: "Account created. Please complete your profile." });
+                navigate("/profile", { state: { highlightMandatory: role === "teacher" } });
+                return;
             }
 
             toast({ title: "Welcome!", description: "Authenticated with Google" });
@@ -169,9 +187,24 @@ const Signup = () => {
                                     <Input id="password" type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-12 rounded-2xl border-2 border-border/10 h-16 text-lg font-bold bg-white/50" />
                                 </div>
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="school" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Academic Institution</Label>
+                                <Input id="school" placeholder="Enter School Name" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className="rounded-2xl border-2 border-border/10 h-16 text-lg font-bold bg-white/50" />
+                            </div>
                         </div>
 
                         <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Phone</Label>
+                                    <Input id="phone" placeholder="+91..." value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="rounded-2xl border-2 border-border/10 h-16 text-lg font-bold bg-white/50" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Location</Label>
+                                    <Input id="address" placeholder="City" value={physicalAddress} onChange={(e) => setPhysicalAddress(e.target.value)} className="rounded-2xl border-2 border-border/10 h-16 text-lg font-bold bg-white/50" />
+                                </div>
+                            </div>
                             {role === "teacher" ? (
                                 <>
                                     <div className="space-y-2">
@@ -179,14 +212,38 @@ const Signup = () => {
                                         <Input id="code" placeholder="Enter Teacher Code" required value={schoolCode} onChange={(e) => setSchoolCode(e.target.value)} className="rounded-2xl border-2 border-border/10 h-16 text-lg font-bold bg-white/50" />
                                     </div>
                                     <div className="space-y-3">
-                                        <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Specialization</Label>
-                                        <div className="grid grid-cols-2 gap-3 p-4 bg-secondary/10 rounded-2xl border border-border/10">
-                                            {subjects.map(s => (
-                                                <div key={s} className="flex items-center space-x-2">
-                                                    <Checkbox id={`sub-${s}`} onCheckedChange={(checked) => setSelectedSubjects(prev => checked ? [...prev, s] : prev.filter(p => p !== s))} />
-                                                    <Label htmlFor={`sub-${s}`} className="text-xs font-bold">{s}</Label>
+                                        <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Specialization & Grades (Mandatory)</Label>
+                                        <div className="p-4 bg-secondary/10 rounded-2xl border border-border/10 space-y-4">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <p className="col-span-2 text-[9px] font-bold uppercase text-muted-foreground mb-1">Select Subjects</p>
+                                                {subjects.map(s => (
+                                                    <div key={s} className="flex items-center space-x-2">
+                                                        <Checkbox id={`sub-${s}`} onCheckedChange={(checked) => setSelectedSubjects(prev => checked ? [...prev, s] : prev.filter(p => p !== s))} />
+                                                        <Label htmlFor={`sub-${s}`} className="text-[10px] font-bold">{s}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {selectedSubjects.includes("Other") && (
+                                                <div className="pt-2 animate-in slide-in-from-top-2">
+                                                    <Input
+                                                        placeholder="Specify your subject"
+                                                        value={customSubject}
+                                                        onChange={(e) => setCustomSubject(e.target.value)}
+                                                        className="h-10 rounded-xl border-2 border-primary/20 text-xs font-bold"
+                                                    />
                                                 </div>
-                                            ))}
+                                            )}
+
+                                            <div className="grid grid-cols-3 gap-2 border-t border-border/10 pt-4">
+                                                <p className="col-span-3 text-[9px] font-bold uppercase text-muted-foreground mb-1">Select Classes</p>
+                                                {classes.map(c => (
+                                                    <div key={c} className="flex items-center space-x-2">
+                                                        <Checkbox id={`cls-${c}`} onCheckedChange={(checked) => setSelectedClasses(prev => checked ? [...prev, c] : prev.filter(p => p !== c))} />
+                                                        <Label htmlFor={`cls-${c}`} className="text-[10px] font-bold">{c}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </>

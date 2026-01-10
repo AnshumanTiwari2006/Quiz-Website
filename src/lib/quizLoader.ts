@@ -8,6 +8,7 @@ export interface Quiz {
     class?: string;
     subject?: string;
     teacherName?: string;
+    createdAt?: any;
 }
 
 export const fetchQuizzes = async (): Promise<Quiz[]> => {

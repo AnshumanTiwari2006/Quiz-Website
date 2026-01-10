@@ -10,25 +10,68 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import { useLocation } from "react-router-dom";
 import {
     User, Mail, Lock, ShieldCheck, GraduationCap,
     ArrowLeft, KeyRound, CheckCircle2, AlertCircle,
-    History, Clock, ShieldAlert, Calendar, Brain
+    History, Clock, ShieldAlert, Calendar, Brain, Camera, Upload,
+    Building2, Phone, MapPin, X, PlusCircle
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const Profile = () => {
     const { user, profile } = useAuth();
     const { toast } = useToast();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isHighlightMandatory = location.state?.highlightMandatory;
 
     const [name, setName] = useState(profile?.name || "");
     const [loading, setLoading] = useState(false);
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [photoURL, setPhotoURL] = useState(profile?.photoURL || "");
 
-    // Quiz History State
+    // Extended Profile Info
+    const [school, setSchool] = useState(profile?.school || "");
+    const [phone, setPhone] = useState(profile?.phone || "");
+    const [address, setAddress] = useState(profile?.address || "");
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(profile?.subjects || []);
+    const [selectedClasses, setSelectedClasses] = useState<string[]>(profile?.classes || []);
+    const [customSubject, setCustomSubject] = useState("");
+    const [showOtherInput, setShowOtherInput] = useState(false);
+
+    const subjectsList = ["Mathematics", "Science", "History", "English", "Geography", "Computer Science", "Physics", "Chemistry", "Biology", "Economics", "Hindi", "Business Studies", "Accountancy", "Other"];
+    const classesList = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
     const [quizHistory, setQuizHistory] = useState<any[]>([]);
     const [historyLoading, setHistoryLoading] = useState(true);
+
+    // Sync state when profile loads
+    useEffect(() => {
+        if (profile) {
+            setName(profile.name || "");
+            setPhotoURL(profile.photoURL || "");
+            setSchool(profile.school || "");
+            setPhone(profile.phone || "");
+            setAddress(profile.address || "");
+            setAddress(profile.address || "");
+            setSelectedSubjects(profile.subjects || []);
+            setSelectedClasses(profile.classes || []);
+
+            // Detect if "Other" was used
+            const hasOther = profile.subjects?.some(s => !subjectsList.filter(item => item !== "Other").includes(s));
+            if (hasOther) {
+                setShowOtherInput(true);
+                const custom = profile.subjects?.find(s => !subjectsList.filter(item => item !== "Other").includes(s));
+                if (custom) setCustomSubject(custom);
+                if (!profile.subjects?.includes("Other")) {
+                    setSelectedSubjects(prev => [...prev, "Other"]);
+                }
+            }
+        }
+    }, [profile]);
 
     useEffect(() => {
         const loadHistory = async () => {
@@ -56,18 +99,59 @@ const Profile = () => {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
+
+        if (profile?.role === "teacher") {
+            if (!phone || selectedSubjects.length === 0 || selectedClasses.length === 0) {
+                toast({ title: "Mandatory Fields", description: "Phone, Subjects, and Classes are required for teachers.", variant: "destructive" });
+                return;
+            }
+        }
+
         setLoading(true);
+
+        const finalSubjects = showOtherInput && customSubject
+            ? [...selectedSubjects.filter(s => s !== "Other"), customSubject]
+            : selectedSubjects.filter(s => s !== "Other");
 
         try {
             await updateDoc(doc(db, "users", user.uid), {
                 name: name,
+                photoURL: photoURL,
+                school: school,
+                phone: phone,
+                address: address,
+                subjects: finalSubjects.length > 0 ? finalSubjects : selectedSubjects,
+                classes: selectedClasses
             });
-            await updateProfile(user, { displayName: name });
-            toast({ title: "Profile Updated", description: "Your details have been synchronized." });
+            await updateProfile(user, { displayName: name, photoURL: photoURL });
+            toast({ title: "Profile Synchronized", description: "All cloud records have been updated." });
         } catch (error: any) {
             toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const toggleItem = (item: string, list: string[], setList: (l: string[]) => void) => {
+        if (list.includes(item)) {
+            setList(list.filter(i => i !== item));
+        } else {
+            setList([...list, item]);
+        }
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 1024 * 1024) {
+                toast({ title: "File too large", description: "Image must be under 1MB", variant: "destructive" });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoURL(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -115,8 +199,16 @@ const Profile = () => {
             <main className="max-w-4xl mx-auto px-6 py-12">
                 <div className="flex items-center justify-between mb-10">
                     <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center font-black text-primary text-3xl shadow-strong">
-                            {initials}
+                        <div className="relative group">
+                            <div className="w-20 h-20 rounded-full bg-primary/10 border-4 border-primary/20 flex items-center justify-center font-black text-primary text-3xl shadow-strong overflow-hidden group-hover:border-primary transition-all">
+                                {photoURL ? (
+                                    <img src={photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                ) : initials}
+                            </div>
+                            <label className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                                <Camera className="w-4 h-4" />
+                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                            </label>
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight">{profile?.name}</h1>
@@ -124,6 +216,11 @@ const Profile = () => {
                                 {profile?.role === "teacher" ? <ShieldCheck className="w-4 h-4 text-primary" /> : <GraduationCap className="w-4 h-4 text-primary" />}
                                 <span className="uppercase text-[10px] font-bold tracking-widest">{profile?.role} Account</span>
                             </p>
+                            {profile?.subjects && profile.subjects.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {profile.subjects.map(s => <Badge key={s} variant="secondary" className="text-[8px] h-4 px-1.5 opacity-70">{s}</Badge>)}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -134,21 +231,123 @@ const Profile = () => {
                         <div className="absolute top-0 left-0 w-2 h-full bg-primary/20" />
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                             <User className="w-5 h-5 text-primary" /> Identity Settings
+                            {isHighlightMandatory && <Badge className="ml-2 bg-amber-500 text-white animate-pulse">Action Required</Badge>}
                         </h2>
 
                         <form onSubmit={handleUpdateProfile} className="space-y-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Full Name</Label>
-                                <Input
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    className="rounded-2xl border-2 border-border/10 h-14 font-bold bg-white/50"
-                                />
+                                <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Full Legal Name</Label>
+                                <div className="relative">
+                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                                    <Input
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="rounded-2xl border-2 border-border/10 h-14 pl-12 font-bold bg-white/50"
+                                    />
+                                </div>
                             </div>
+
                             <div className="space-y-2">
-                                <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Email (Primary)</Label>
+                                <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">School / Organization</Label>
+                                <div className="relative">
+                                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                                    <Input
+                                        value={school}
+                                        onChange={(e) => setSchool(e.target.value)}
+                                        placeholder="Enter Affiliated School"
+                                        className="rounded-2xl border-2 border-border/10 h-14 pl-12 font-bold bg-white/50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className={`text-[10px] uppercase font-bold tracking-widest ml-1 ${isHighlightMandatory ? "text-amber-500 animate-pulse" : "text-primary/80"}`}>Phone Number (Mandatory)</Label>
+                                    <div className="relative">
+                                        <Phone className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isHighlightMandatory ? "text-amber-400" : "text-primary/40"}`} />
+                                        <Input
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="+91..."
+                                            className={`rounded-2xl border-2 h-14 pl-12 font-bold bg-white/50 ${isHighlightMandatory ? "border-amber-200 ring-2 ring-amber-50" : "border-border/10"}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Address / Location</Label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                                        <Input
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            placeholder="City, Country"
+                                            className="rounded-2xl border-2 border-border/10 h-14 pl-12 font-bold bg-white/50"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-border/10">
+                                {["teacher", "admin", "moderator", "viewer"].includes(profile?.role || "") && (
+                                    <>
+                                        <div className="space-y-4 mb-6">
+                                            <Label className={`text-[11px] uppercase font-black tracking-[0.15em] flex items-center gap-2 ${isHighlightMandatory ? "text-amber-600 animate-pulse" : "text-primary/70"}`}>
+                                                <GraduationCap className="w-4 h-4" /> Academic Portfolio
+                                            </Label>
+
+                                            <div className="space-y-3">
+                                                <p className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Assigned Grade Levels</p>
+                                                <div className={`flex flex-wrap gap-2 p-4 bg-primary/5 rounded-2xl border min-h-[60px] transition-all ${isHighlightMandatory ? "border-amber-300 bg-amber-50/30" : "border-primary/10"}`}>
+                                                    {classesList.map(c => (
+                                                        <Badge
+                                                            key={c}
+                                                            variant={selectedClasses.includes(c) ? "default" : "outline"}
+                                                            className={`cursor-pointer h-8 text-[10px] font-bold transition-all shadow-none ${selectedClasses.includes(c) ? "bg-primary border-primary" : "hover:border-primary/40 bg-white"}`}
+                                                            onClick={() => toggleItem(c, selectedClasses, setSelectedClasses)}
+                                                        >
+                                                            {c} {selectedClasses.includes(c) && <X className="ml-1 w-2.5 h-2.5" />}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <p className="text-[9px] font-bold uppercase text-muted-foreground ml-1">Subject Expertise</p>
+                                                <div className={`flex flex-wrap gap-2 p-4 bg-primary/5 rounded-2xl border min-h-[60px] transition-all ${isHighlightMandatory ? "border-amber-300 bg-amber-50/30" : "border-primary/10"}`}>
+                                                    {subjectsList.map(s => (
+                                                        <Badge
+                                                            key={s}
+                                                            variant={selectedSubjects.includes(s) ? "default" : "outline"}
+                                                            className={`cursor-pointer h-8 text-[10px] font-bold transition-all shadow-none ${selectedSubjects.includes(s) ? "bg-primary border-primary" : "hover:border-primary/40 bg-white"}`}
+                                                            onClick={() => {
+                                                                toggleItem(s, selectedSubjects, setSelectedSubjects);
+                                                                if (s === "Other") setShowOtherInput(!showOtherInput);
+                                                            }}
+                                                        >
+                                                            {s} {selectedSubjects.includes(s) && <X className="ml-1 w-2.5 h-2.5" />}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                                {showOtherInput && (
+                                                    <div className="mt-2 animate-in slide-in-from-top-2">
+                                                        <Input
+                                                            placeholder="Specify Specialized Subject"
+                                                            value={customSubject}
+                                                            onChange={(e) => setCustomSubject(e.target.value)}
+                                                            className="rounded-xl border-2 border-primary/20 h-12 text-sm font-bold bg-white"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Email Registry</Label>
                                 <div className="h-14 flex items-center justify-between px-4 bg-secondary/20 rounded-2xl font-bold text-muted-foreground border border-dashed border-border/50 overflow-hidden">
-                                    <span className="truncate">{user?.email}</span>
+                                    <span className="truncate text-xs">{user?.email}</span>
                                     {user?.emailVerified ? (
                                         <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 ml-2" />
                                     ) : (
@@ -158,13 +357,13 @@ const Profile = () => {
                                             onClick={resendVerification}
                                             className="ml-2 text-primary h-8 hover:bg-primary/10 rounded-lg text-[10px] font-bold uppercase tracking-widest shrink-0"
                                         >
-                                            Verify Now
+                                            Verify
                                         </Button>
                                     )}
                                 </div>
                             </div>
-                            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl h-14 font-bold shadow-strong transition-all">
-                                Save Details
+                            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl h-16 font-extrabold shadow-strong hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                Update Expert Profile
                             </Button>
                         </form>
                     </Card>
