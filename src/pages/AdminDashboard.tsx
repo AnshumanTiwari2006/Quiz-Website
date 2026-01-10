@@ -91,9 +91,14 @@ const AdminDashboard = () => {
         setCompletedToday(dailyScores.length);
 
         // Arena Sessions hosted by this teacher
-        const qArena = query(collection(db, "arena_sessions"), where("hostId", "==", user?.uid), orderBy("createdAt", "desc"));
+        const qArena = query(collection(db, "arena_sessions"), where("hostId", "==", user?.uid));
         const snapArena = await getDocs(qArena);
-        setArenaSessions(snapArena.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const allTeacherArena = snapArena.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+        // Sort in memory to avoid composite index requirements
+        allTeacherArena.sort((a, b) =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        );
+        setArenaSessions(allTeacherArena);
 
       } catch (error) {
         console.error("Error loading dashboard stats:", error);

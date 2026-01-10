@@ -96,7 +96,7 @@ const ArenaJoin = () => {
                             disabled={loading || code.length !== 6}
                             className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.02] transition-all text-lg font-black tracking-tight border-0"
                         >
-                            {loading ? "AUTHORIZING..." : "JOIN THE FRAY"}
+                            {loading ? "AUTHORIZING..." : "ENTER BATTLE"}
                             {!loading && <ArrowRight className="ml-3 h-5 w-5" />}
                         </Button>
                     </form>

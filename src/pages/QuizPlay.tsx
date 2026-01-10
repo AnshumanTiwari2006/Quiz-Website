@@ -355,8 +355,8 @@ const QuizPlay = () => {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12 items-start justify-between mb-12">
-          <div className="flex-1 w-full max-w-3xl min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12 items-start mb-12">
+          <div className="lg:col-start-1 lg:row-start-1 w-full max-w-3xl min-w-0">
             <div className="">
               {currentQuestion.type === "flashcard" ? (
                 <FlashcardComponent
@@ -538,8 +538,39 @@ const QuizPlay = () => {
             </div>
           </div>
 
-          {/* Navigation Sidebar */}
-          <aside className="w-full lg:w-72 shrink-0 space-y-6 lg:sticky lg:top-[180px]">
+          <div className="lg:col-start-1 lg:row-start-2 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-4 lg:mt-8">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentIndex(currentIndex - 1)}
+              disabled={currentIndex === 0}
+              className="w-full sm:w-auto rounded-full px-8 sm:px-10 h-14 sm:h-16 text-foreground hover:bg-primary hover:text-white transition-all font-bold text-sm sm:text-base order-2 sm:order-1"
+            >
+              <ChevronLeft className="mr-3 h-5 w-5" />
+              Previous
+            </Button>
+
+            <div className="hidden sm:block flex-1" />
+
+            {isLastQuestion ? (
+              <Button
+                onClick={handleSubmit}
+                className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
+              >
+                Finish Quiz
+                <CheckCircle2 className="ml-3 h-6 w-6" />
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setCurrentIndex(currentIndex + 1)}
+                className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
+              >
+                Next
+                <ChevronRight className="ml-3 h-6 w-6" />
+              </Button>
+            )}
+          </div>
+
+          <aside className="lg:col-start-2 lg:row-start-1 lg:row-span-2 w-full lg:sticky lg:top-[180px] space-y-6">
             <Card className="p-6 rounded-[2rem] border-0 bg-secondary/50 shadow-soft ring-1 ring-border/30">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6">Quiz Navigator</h3>
               <div className="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-4 gap-2">
@@ -583,38 +614,6 @@ const QuizPlay = () => {
               </div>
             </Card>
           </aside>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-12">
-          <Button
-            variant="ghost"
-            onClick={() => setCurrentIndex(currentIndex - 1)}
-            disabled={currentIndex === 0}
-            className="w-full sm:w-auto rounded-full px-8 sm:px-10 h-14 sm:h-16 text-foreground hover:bg-primary hover:text-white transition-all font-bold text-sm sm:text-base order-2 sm:order-1"
-          >
-            <ChevronLeft className="mr-3 h-5 w-5" />
-            Previous
-          </Button>
-
-          <div className="hidden sm:block flex-1" />
-
-          {isLastQuestion ? (
-            <Button
-              onClick={handleSubmit}
-              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
-            >
-              Finish Quiz
-              <CheckCircle2 className="ml-3 h-6 w-6" />
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setCurrentIndex(currentIndex + 1)}
-              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
-            >
-              Next
-              <ChevronRight className="ml-3 h-6 w-6" />
-            </Button>
-          )}
         </div>
       </main>
     </div>

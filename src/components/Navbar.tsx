@@ -118,7 +118,7 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="outline"
-                                className="rounded-full border-2 border-primary/20 text-primary font-bold text-[10px] uppercase tracking-[0.2em] px-6 h-10 hover:bg-primary/5 hover:border-primary transition-all gap-2"
+                                className="rounded-full border-2 border-primary/20 text-primary font-bold text-[10px] uppercase tracking-[0.2em] px-6 h-10 hover:bg-primary hover:text-white hover:border-primary transition-all gap-2"
                             >
                                 <Zap className="w-3.5 h-3.5 fill-primary/20" />
                                 Arena
@@ -278,6 +278,32 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                                     </>
                                 )}
 
+                                <div className="mt-4 pt-4 border-t border-border/50">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 px-4 mb-2">Battleground</p>
+                                    <SheetClose asChild>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => navigate('/arena/join')}
+                                            className="justify-start w-full h-12 rounded-2xl font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all px-4"
+                                        >
+                                            <Zap className="h-4 w-4 mr-4 fill-primary/10" />
+                                            Join Arena
+                                        </Button>
+                                    </SheetClose>
+                                    {(isAdminRole || isTeacher) && (
+                                        <SheetClose asChild>
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => navigate('/arena/create')}
+                                                className="justify-start w-full h-12 rounded-2xl font-bold text-xs uppercase tracking-widest text-primary hover:bg-primary/10 transition-all px-4"
+                                            >
+                                                <PlusCircle className="h-4 w-4 mr-4" />
+                                                Host Battle
+                                            </Button>
+                                        </SheetClose>
+                                    )}
+                                </div>
+
                                 {user && (
                                     <SheetClose asChild>
                                         <Button
@@ -313,7 +339,7 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                     </Sheet>
                 </div>
             </div>
-        </header>
+        </header >
     );
 };
 

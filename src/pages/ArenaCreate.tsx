@@ -18,6 +18,8 @@ const ArenaCreate = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [creatingSession, setCreatingSession] = useState(false);
+    const [pacingMode, setPacingMode] = useState<"manual" | "auto">("manual");
+    const [secondsPerQuestion, setSecondsPerQuestion] = useState(30);
 
     useEffect(() => {
         const loadQuizzes = async () => {
@@ -75,9 +77,9 @@ const ArenaCreate = () => {
                 createdAt: new Date().toISOString(),
                 isTeacherSession: profile?.role === "teacher" || profile?.role === "admin",
                 settings: {
-                    timePerQuestion: quiz.timer || 30,
+                    timePerQuestion: secondsPerQuestion,
                     showLeaderboard: true,
-                    manualPace: false
+                    manualPace: pacingMode === "manual"
                 }
             };
 
@@ -124,6 +126,43 @@ const ArenaCreate = () => {
                         />
                     </div>
                 </div>
+
+                {/* Pacing Settings */}
+                <Card className="mb-12 p-8 rounded-[3rem] border-0 bg-white shadow-soft ring-1 ring-border/50">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="flex-1">
+                            <h2 className="text-xl font-black mb-1">Battle Configuration</h2>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Select how questions advance during the match</p>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                            <div className="flex flex-col gap-1 w-full md:w-32">
+                                <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground ml-1">Seconds</label>
+                                <input
+                                    type="number"
+                                    value={secondsPerQuestion}
+                                    onChange={(e) => setSecondsPerQuestion(parseInt(e.target.value) || 5)}
+                                    className="h-12 rounded-xl bg-secondary/30 border-0 px-4 font-bold text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                                    min={5}
+                                    max={300}
+                                />
+                            </div>
+                            <div className="flex bg-secondary/30 p-1.5 rounded-2xl w-full md:w-auto self-end">
+                                <button
+                                    onClick={() => setPacingMode("manual")}
+                                    className={`flex-1 md:w-32 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${pacingMode === "manual" ? "bg-white shadow-soft text-primary" : "text-muted-foreground hover:bg-white/50"}`}
+                                >
+                                    Host Paced
+                                </button>
+                                <button
+                                    onClick={() => setPacingMode("auto")}
+                                    className={`flex-1 md:w-32 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${pacingMode === "auto" ? "bg-white shadow-soft text-primary" : "text-muted-foreground hover:bg-white/50"}`}
+                                >
+                                    Auto Timer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24">

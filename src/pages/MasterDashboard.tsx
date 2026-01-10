@@ -114,23 +114,25 @@ const MasterDashboard = () => {
             const allScores = scoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
             setScores(allScores);
 
-            // Calculate Stats
+
+            const arenaSnap = await getDocs(collection(db, "arena_sessions"));
+            const allArena = arenaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+            const sortedArena = allArena.sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateB - dateA;
+            });
+            setArenaSessions(sortedArena);
+            console.log("Dashboard: Arena Data Fetched:", sortedArena.length);
+
+            // Final Stats Update consolidated
             setStats({
                 totalUsers: allUsers.length,
                 totalQuizzes: allQuizzes.length,
                 totalAttempts: allScores.length,
                 flaggedQuizzes: allQuizzes.filter((q: any) => q.isFlagged).length,
-                totalArenaSessions: 0 // Will update after arena fetch
+                totalArenaSessions: sortedArena.length
             });
-
-            const arenaSnap = await getDocs(collection(db, "arena_sessions"));
-            const allArena = arenaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-            setArenaSessions(allArena);
-
-            setStats(prev => ({
-                ...prev,
-                totalArenaSessions: allArena.length
-            }));
 
             // Calculate Chart Data (Attempts by Date)
             const dateMap = new Map();
@@ -406,10 +408,11 @@ const MasterDashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
                     {[
                         { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-600", bg: "bg-blue-50/50" },
                         { label: "Active Quizzes", value: stats.totalQuizzes, icon: Brain, color: "text-primary", bg: "bg-primary/5" },
+                        { label: "Arena Battles", value: stats.totalArenaSessions, icon: Zap, color: "text-amber-500", bg: "bg-amber-50/50" },
                         { label: "Global Attempts", value: stats.totalAttempts, icon: History, color: "text-green-600", bg: "bg-green-50/50" },
                         { label: "Flagged Content", value: stats.flaggedQuizzes, icon: ShieldAlert, color: "text-destructive", bg: "bg-destructive/5" },
                     ].map((stat, i) => (
@@ -962,46 +965,58 @@ const MasterDashboard = () => {
                                     </thead>
                                     <tbody className="divide-y divide-border/30">
                                         {arenaSessions.filter(s =>
-                                            s.code?.toLowerCase().includes(searchArena.toLowerCase()) ||
-                                            s.hostName?.toLowerCase().includes(searchArena.toLowerCase())
-                                        ).map((s) => (
-                                            <tr key={s.id} className="group hover:bg-secondary/20 transition-all">
-                                                <td className="py-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 ring-1 ring-amber-500/20">
-                                                            <Zap className="w-5 h-5 fill-current" />
-                                                        </div>
-                                                        <span className="font-black text-lg tracking-tight">{s.code}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-6 font-bold text-sm">{s.quizTitle}</td>
-                                                <td className="py-6">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-secondary">
-                                                            {s.hostPhoto ? <img src={s.hostPhoto} className="w-full h-full object-cover" /> : <UserCog className="w-3 h-3 m-auto text-muted-foreground" />}
-                                                        </div>
-                                                        <span className="text-xs font-medium">{s.hostName}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-6">
-                                                    <Badge className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-0 ${s.status === 'active' ? 'bg-green-500 text-white' :
-                                                        s.status === 'finished' ? 'bg-slate-500 text-white' : 'bg-amber-500 text-white'
-                                                        }`}>
-                                                        {s.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="py-6 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => navigate(`/arena/${s.code}/result`)}
-                                                        className="rounded-xl font-bold text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
-                                                    >
-                                                        Review Intel
-                                                    </Button>
+                                            (s.code || "").toLowerCase().includes((searchArena || "").toLowerCase()) ||
+                                            (s.hostName || "").toLowerCase().includes((searchArena || "").toLowerCase())
+                                        ).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="py-20 text-center">
+                                                    <Zap className="w-12 h-12 text-muted-foreground/10 mx-auto mb-4" />
+                                                    <p className="font-bold text-muted-foreground tracking-widest uppercase text-[10px]">No active arena sessions tracked</p>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            arenaSessions.filter(s =>
+                                                (s.code || "").toLowerCase().includes((searchArena || "").toLowerCase()) ||
+                                                (s.hostName || "").toLowerCase().includes((searchArena || "").toLowerCase())
+                                            ).map((s) => (
+                                                <tr key={s.id} className="group hover:bg-secondary/20 transition-all">
+                                                    <td className="py-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 ring-1 ring-amber-500/20">
+                                                                <Zap className="w-5 h-5 fill-current" />
+                                                            </div>
+                                                            <span className="font-black text-lg tracking-tight">{s.code}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-6 font-bold text-sm">{s.quizTitle}</td>
+                                                    <td className="py-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full overflow-hidden bg-secondary">
+                                                                {s.hostPhoto ? <img src={s.hostPhoto} className="w-full h-full object-cover" /> : <UserCog className="w-3 h-3 m-auto text-muted-foreground" />}
+                                                            </div>
+                                                            <span className="text-xs font-medium">{s.hostName}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-6">
+                                                        <Badge className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-0 ${s.status === 'active' ? 'bg-green-500 text-white' :
+                                                            s.status === 'finished' ? 'bg-slate-500 text-white' : 'bg-amber-500 text-white'
+                                                            }`}>
+                                                            {s.status}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="py-6 text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/arena/${s.code}/result`)}
+                                                            className="rounded-xl font-bold text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
+                                                        >
+                                                            Review Intel
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
