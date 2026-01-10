@@ -48,24 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (docSnap.exists()) {
                     const data = docSnap.data() as UserProfile;
-                    // Master Admin Override
-                    if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
-                        data.role = "admin";
-                    }
                     // Sync Google Photo if local is missing
                     if (!data.photoURL && firebaseUser.photoURL) {
                         data.photoURL = firebaseUser.photoURL;
                     }
                     setProfile(data);
-                } else if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
-                    // Even if record doesn't exist in Firestore, hardcode the admin profile
-                    setProfile({
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,
-                        role: "admin",
-                        name: "Master Admin",
-                        photoURL: firebaseUser.photoURL || undefined
-                    });
                 }
             } else {
                 setProfile(null);

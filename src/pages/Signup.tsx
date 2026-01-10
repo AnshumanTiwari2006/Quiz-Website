@@ -41,7 +41,7 @@ const Signup = () => {
         setLoading(true);
 
         if (role === "teacher") {
-            if (schoolCode !== "ABIC-2026") {
+            if (schoolCode !== "T-ABIC-EDU") {
                 toast({ title: "Invalid Code", description: "Only authorized teachers can sign up.", variant: "destructive" });
                 setLoading(false);
                 return;

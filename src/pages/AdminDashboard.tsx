@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet } from "lucide-react";
+import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, User, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -252,8 +252,19 @@ const AdminDashboard = () => {
               detailList.map((item, idx) => (
                 <div key={idx} className="p-4 rounded-2xl bg-secondary/20 ring-1 ring-border/10 flex items-center justify-between group hover:bg-secondary/30 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.isCheated ? "bg-destructive/10" : "bg-primary/10"}`}>
-                      {item.isCheated ? <ShieldAlert className="w-5 h-5 text-destructive" /> : <CheckCircle2 className="w-5 h-5 text-primary" />}
+                    <div className="relative group/user">
+                      <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-sm transition-all ${item.isCheated ? "border-destructive/40" : "border-primary/20"}`}>
+                        {item.userPhoto ? (
+                          <img src={item.userPhoto} alt={item.userName} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className={`w-full h-full flex items-center justify-center font-black text-xs ${item.isCheated ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                            {item.userName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                          </div>
+                        )}
+                      </div>
+                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${item.isCheated ? "bg-destructive" : "bg-primary"}`}>
+                        {item.isCheated ? <ShieldAlert className="w-2.5 h-2.5 text-white" /> : <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                      </div>
                     </div>
                     <div>
                       <p className="font-bold text-foreground flex items-center gap-2">

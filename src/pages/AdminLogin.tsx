@@ -25,37 +25,21 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (role === "teacher" && teacherCode !== "T-ABIC-EDU") {
+      toast({ title: "Authorized Personnel Only", description: "Invalid teacher verification code.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
 
-    const isMasterEmail = email === "anshumantiwari2006@outlook.com";
-    const isMasterPassword = password === "Ren-ABIC-2026";
-
     try {
-      let userCredential;
-      try {
-        userCredential = await signInWithEmailAndPassword(auth, email, password);
-      } catch (error: any) {
-        if (isMasterEmail && isMasterPassword && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
-          const { createUserWithEmailAndPassword } = await import("firebase/auth");
-          userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-          await setDoc(doc(db, "users", userCredential.user.uid), {
-            uid: userCredential.user.uid,
-            email,
-            name: "Master Admin",
-            role: "admin",
-            createdAt: new Date().toISOString()
-          });
-        } else {
-          throw error;
-        }
-      }
-
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       const userDoc = await getDoc(doc(db, "users", user.uid));
 
-      if (userDoc.exists() || isMasterEmail) {
-        const userData = userDoc.data() || { name: "Master Admin", role: "admin" };
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
 
         if (userData.isLocked) {
           await auth.signOut();
@@ -68,9 +52,9 @@ const AdminLogin = () => {
 
         if (from) {
           navigate(from, { replace: true });
-        } else if (isMasterEmail) {
+        } else if (userData.role === "admin") {
           navigate("/admin/master-dashboard");
-        } else if (userData.role === "teacher") {
+        } else if (userData.role === "teacher" || userData.role === "moderator" || userData.role === "viewer") {
           navigate("/admin/dashboard");
         } else {
           navigate("/quizzes");
@@ -87,7 +71,7 @@ const AdminLogin = () => {
   };
 
   const handleGoogleAuth = async () => {
-    if (role === "teacher" && teacherCode !== "ABIC-2026") {
+    if (role === "teacher" && teacherCode !== "T-ABIC-EDU") {
       toast({ title: "Invalid Code", description: "Teacher verification code is incorrect.", variant: "destructive" });
       return;
     }
@@ -103,10 +87,10 @@ const AdminLogin = () => {
         toast({ title: "Welcome back!", description: `Logged in as ${userData.name}` });
         if (from) {
           navigate(from, { replace: true });
-        } else if (user.email === "anshumantiwari2006@outlook.com") {
+        } else if (userData.role === "admin") {
           navigate("/admin/master-dashboard");
         } else {
-          navigate(userData.role === "teacher" ? "/admin/dashboard" : "/quizzes");
+          navigate((userData.role === "teacher" || userData.role === "moderator" || userData.role === "viewer") ? "/admin/dashboard" : "/quizzes");
         }
       } else {
         const profileData = {

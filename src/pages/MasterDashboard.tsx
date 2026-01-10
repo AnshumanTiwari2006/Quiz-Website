@@ -712,8 +712,12 @@ const MasterDashboard = () => {
                                                 <tr key={u.id} className="group hover:bg-secondary/20 transition-all duration-300">
                                                     <td className="py-6 pr-4">
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${u.role === 'teacher' ? 'bg-primary/10 text-primary' : u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                                                                {u.name?.charAt(0) || "U"}
+                                                            <div className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center font-black text-lg ${u.role === 'teacher' ? 'bg-primary/10 text-primary' : u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                                                                {u.photoURL ? (
+                                                                    <img src={u.photoURL} alt={u.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    u.name?.charAt(0) || "U"
+                                                                )}
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors">{u.name || "Anonymous User"}</span>

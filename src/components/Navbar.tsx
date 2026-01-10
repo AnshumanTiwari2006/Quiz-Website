@@ -104,8 +104,15 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                         <div className="flex items-center gap-2 ml-2 pl-4 border-l border-border/20">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-xs hover:bg-primary hover:text-white transition-all shadow-soft outline-none">
-                                        {profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                                    <button className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-xs hover:bg-primary hover:text-white transition-all shadow-soft outline-none overflow-hidden relative group/avatar">
+                                        {profile?.photoURL ? (
+                                            <img src={profile.photoURL} alt={profile.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />
+                                        )}
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Settings className="w-4 h-4 text-white" />
+                                        </div>
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56 rounded-[2rem] p-2 border-0 shadow-strong ring-1 ring-border/50 bg-background/95 backdrop-blur-md" align="end">
@@ -149,9 +156,13 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                     {user && (
                         <button
                             onClick={() => navigate('/profile')}
-                            className="w-9 h-9 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-[10px] shadow-soft"
+                            className="w-9 h-9 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary text-[10px] shadow-soft overflow-hidden"
                         >
-                            {profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                            {profile?.photoURL ? (
+                                <img src={profile.photoURL} alt={profile.name} className="w-full h-full object-cover" />
+                            ) : (
+                                profile?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />
+                            )}
                         </button>
                     )}
 

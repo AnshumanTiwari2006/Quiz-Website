@@ -123,7 +123,7 @@ const Profile = () => {
                 subjects: finalSubjects.length > 0 ? finalSubjects : selectedSubjects,
                 classes: selectedClasses
             });
-            await updateProfile(user, { displayName: name, photoURL: photoURL });
+            await updateProfile(user, { displayName: name });
             toast({ title: "Profile Synchronized", description: "All cloud records have been updated." });
         } catch (error: any) {
             toast({ title: "Update Failed", description: error.message, variant: "destructive" });
@@ -143,13 +143,47 @@ const Profile = () => {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1024 * 1024) {
-                toast({ title: "File too large", description: "Image must be under 1MB", variant: "destructive" });
+            // Check original size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                toast({ title: "File too large", description: "Maximum 5MB allowed for profile photos.", variant: "destructive" });
                 return;
             }
+
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoURL(reader.result as string);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Create a canvas for compression
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Constrain dimensions for web-ready profile pics
+                    const max_size = 400;
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG with 0.7 quality
+                    // This keeps 5MB source files under ~100KB in the DB
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    setPhotoURL(compressedBase64);
+                    toast({ title: "Image Ready", description: "Photo optimized for cloud storage." });
+                };
+                img.src = event.target?.result as string;
             };
             reader.readAsDataURL(file);
         }
