@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Lock, ShieldCheck, GraduationCap, Chrome } from "lucide-react";
+import { User, Mail, Lock, ShieldCheck, GraduationCap } from "lucide-react";
+import GoogleIcon from "@/components/icons/GoogleIcon";
 
 const Signup = () => {
     const [role, setRole] = useState<"student" | "teacher">("student");
@@ -105,6 +106,7 @@ const Signup = () => {
                     email: user.email,
                     name: user.displayName || "Scholar",
                     role: role,
+                    photoURL: user.photoURL || "",
                     school: schoolName,
                     phone: phoneNumber,
                     address: physicalAddress,
@@ -115,6 +117,13 @@ const Signup = () => {
                 toast({ title: "Welcome!", description: "Account created. Please complete your profile." });
                 navigate("/profile", { state: { highlightMandatory: role === "teacher" } });
                 return;
+            }
+
+            const userData = userDoc.data();
+
+            // Sync photo if missing
+            if (!userData.photoURL && user.photoURL) {
+                await updateDoc(doc(db, "users", user.uid), { photoURL: user.photoURL });
             }
 
             toast({ title: "Welcome!", description: "Authenticated with Google" });
@@ -280,7 +289,7 @@ const Signup = () => {
                         </div>
 
                         <Button type="button" onClick={handleGoogleAuth} disabled={loading} variant="outline" className="w-full h-16 rounded-2xl border-2 border-border/10 font-bold hover:bg-secondary/20 transition-all flex items-center justify-center gap-3">
-                            <Chrome className="w-5 h-5 text-[#4285F4]" />
+                            <GoogleIcon className="w-5 h-5" />
                             Continue with Gmail
                         </Button>
                     </div>

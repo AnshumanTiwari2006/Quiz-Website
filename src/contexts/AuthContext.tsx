@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 interface UserProfile {
@@ -47,10 +47,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    const data = docSnap.data() as UserProfile;
-                    // Sync Google Photo if local is missing
+                    let data = docSnap.data() as UserProfile;
+                    // Sync Google Photo to Firestore if local is missing
                     if (!data.photoURL && firebaseUser.photoURL) {
-                        data.photoURL = firebaseUser.photoURL;
+                        try {
+                            const userRef = doc(db, "users", firebaseUser.uid);
+                            await updateDoc(userRef, { photoURL: firebaseUser.photoURL });
+                            data.photoURL = firebaseUser.photoURL;
+                        } catch (err) {
+                            console.error("Error syncing Google photo to Firestore:", err);
+                        }
                     }
                     setProfile(data);
                 }

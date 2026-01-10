@@ -37,7 +37,8 @@ import {
     Award,
     Pause,
     Play,
-    Edit
+    Edit,
+    Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -74,18 +75,21 @@ const MasterDashboard = () => {
         totalUsers: 0,
         totalQuizzes: 0,
         totalAttempts: 0,
-        flaggedQuizzes: 0
+        flaggedQuizzes: 0,
+        totalArenaSessions: 0
     });
 
     const [loading, setLoading] = useState(true);
     const [searchUser, setSearchUser] = useState("");
     const [searchQuiz, setSearchQuiz] = useState("");
+    const [searchArena, setSearchArena] = useState("");
     const [broadcastMessage, setBroadcastMessage] = useState("");
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedQuizAnalytics, setSelectedQuizAnalytics] = useState<any>(null);
     const [newPassword, setNewPassword] = useState("");
     const [chartData, setChartData] = useState<any[]>([]);
     const [subjectData, setSubjectData] = useState<any[]>([]);
+    const [arenaSessions, setArenaSessions] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState("users");
 
     const isAdmin = profile?.role === "admin";
@@ -115,8 +119,18 @@ const MasterDashboard = () => {
                 totalUsers: allUsers.length,
                 totalQuizzes: allQuizzes.length,
                 totalAttempts: allScores.length,
-                flaggedQuizzes: allQuizzes.filter((q: any) => q.isFlagged).length
+                flaggedQuizzes: allQuizzes.filter((q: any) => q.isFlagged).length,
+                totalArenaSessions: 0 // Will update after arena fetch
             });
+
+            const arenaSnap = await getDocs(collection(db, "arena_sessions"));
+            const allArena = arenaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+            setArenaSessions(allArena);
+
+            setStats(prev => ({
+                ...prev,
+                totalArenaSessions: allArena.length
+            }));
 
             // Calculate Chart Data (Attempts by Date)
             const dateMap = new Map();
@@ -168,6 +182,7 @@ const MasterDashboard = () => {
             students: quizScores.map(s => ({
                 name: s.userName,
                 email: s.userEmail,
+                photoURL: s.userPhoto || "",
                 score: s.percentage,
                 date: s.timestamp
             })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -317,6 +332,16 @@ const MasterDashboard = () => {
                 ];
                 filename = "system_architecture_status";
                 break;
+            case "arena":
+                exportData = arenaSessions.map(s => ({
+                    "Arena Code": s.code,
+                    "Quiz Title": s.quizTitle,
+                    "Host Name": s.hostName,
+                    "Status": s.status,
+                    "Created At": s.createdAt ? new Date(s.createdAt).toLocaleString() : 'N/A'
+                }));
+                filename = "global_arena_registry";
+                break;
         }
 
         const csv = Papa.unparse(exportData);
@@ -443,8 +468,12 @@ const MasterDashboard = () => {
                                     {getQuizAnalytics(selectedQuizAnalytics?.id).students.map((s: any, idx: number) => (
                                         <div key={idx} className="flex items-center justify-between p-5 rounded-3xl bg-background ring-1 ring-border/50 hover:shadow-soft transition-all group">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center font-black text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                                                    {s.name?.charAt(0)}
+                                                <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center font-black text-primary group-hover:bg-primary group-hover:text-white transition-all overflow-hidden">
+                                                    {s.photoURL ? (
+                                                        <img src={s.photoURL} alt={s.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        s.name?.charAt(0)
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <p className="font-bold tracking-tight text-foreground">{s.name}</p>
@@ -475,6 +504,9 @@ const MasterDashboard = () => {
                         </TabsTrigger>
                         <TabsTrigger value="analytics" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
                             <TrendingUp className="w-3.5 h-3.5" /> Performance Analytics
+                        </TabsTrigger>
+                        <TabsTrigger value="arena" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
+                            <Zap className="w-3.5 h-3.5" /> Arena Registry
                         </TabsTrigger>
                         <TabsTrigger value="system" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
                             <Settings className="w-3.5 h-3.5" /> System Controls
@@ -613,8 +645,12 @@ const MasterDashboard = () => {
                                         return (
                                             <div key={idx} className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600">
-                                                        {userScores[0]?.userName?.charAt(0)}
+                                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 overflow-hidden">
+                                                        {userScores[0]?.userPhoto ? (
+                                                            <img src={userScores[0].userPhoto} alt={userScores[0].userName} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            userScores[0]?.userName?.charAt(0)
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-sm tracking-tight">{userScores[0]?.userName}</p>
@@ -889,6 +925,83 @@ const MasterDashboard = () => {
                                                 </tr>
                                             ))
                                         )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="arena" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Card className="p-8 rounded-[2.5rem] border-0 bg-background shadow-medium ring-1 ring-border/50">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                                <div>
+                                    <h3 className="text-2xl font-black tracking-tight">Global Arena Network</h3>
+                                    <p className="text-sm text-muted-foreground font-medium">Monitor all real-time multiplayer sessions across the platform.</p>
+                                </div>
+                                <div className="relative w-full md:w-80">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                                    <Input
+                                        placeholder="Search by code or host..."
+                                        className="pl-12 rounded-2xl h-14 border-2 border-border/10 focus:ring-primary/20 transition-all font-bold placeholder:text-muted-foreground/30 shadow-inner bg-secondary/10"
+                                        value={searchArena}
+                                        onChange={(e) => setSearchArena(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-border/50">
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Battle Session</th>
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Associated Module</th>
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Host Node</th>
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Status</th>
+                                            <th className="text-right pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Control</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/30">
+                                        {arenaSessions.filter(s =>
+                                            s.code?.toLowerCase().includes(searchArena.toLowerCase()) ||
+                                            s.hostName?.toLowerCase().includes(searchArena.toLowerCase())
+                                        ).map((s) => (
+                                            <tr key={s.id} className="group hover:bg-secondary/20 transition-all">
+                                                <td className="py-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 ring-1 ring-amber-500/20">
+                                                            <Zap className="w-5 h-5 fill-current" />
+                                                        </div>
+                                                        <span className="font-black text-lg tracking-tight">{s.code}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-6 font-bold text-sm">{s.quizTitle}</td>
+                                                <td className="py-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full overflow-hidden bg-secondary">
+                                                            {s.hostPhoto ? <img src={s.hostPhoto} className="w-full h-full object-cover" /> : <UserCog className="w-3 h-3 m-auto text-muted-foreground" />}
+                                                        </div>
+                                                        <span className="text-xs font-medium">{s.hostName}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-6">
+                                                    <Badge className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-0 ${s.status === 'active' ? 'bg-green-500 text-white' :
+                                                        s.status === 'finished' ? 'bg-slate-500 text-white' : 'bg-amber-500 text-white'
+                                                        }`}>
+                                                        {s.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-6 text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => navigate(`/arena/${s.code}/result`)}
+                                                        className="rounded-xl font-bold text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
+                                                    >
+                                                        Review Intel
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, User, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet } from "lucide-react";
+import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, User, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,8 +33,9 @@ const AdminDashboard = () => {
 
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailTitle, setDetailTitle] = useState("");
-  const [detailType, setDetailType] = useState<"attempted" | "cheated" | "today" | "joined">("attempted");
+  const [detailType, setDetailType] = useState<"attempted" | "cheated" | "today" | "joined" | "arena">("attempted");
   const [detailList, setDetailList] = useState<any[]>([]);
+  const [arenaSessions, setArenaSessions] = useState<any[]>([]);
 
   useEffect(() => {
     const isAdminRole = ["admin", "moderator", "viewer"].includes(profile?.role || "");
@@ -89,6 +90,11 @@ const AdminDashboard = () => {
         });
         setCompletedToday(dailyScores.length);
 
+        // Arena Sessions hosted by this teacher
+        const qArena = query(collection(db, "arena_sessions"), where("hostId", "==", user?.uid), orderBy("createdAt", "desc"));
+        const snapArena = await getDocs(qArena);
+        setArenaSessions(snapArena.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
       } catch (error) {
         console.error("Error loading dashboard stats:", error);
         toast({
@@ -104,7 +110,7 @@ const AdminDashboard = () => {
     }
   }, [navigate, user, profile, authLoading]);
 
-  const showDetails = (type: "attempted" | "cheated" | "today" | "joined") => {
+  const showDetails = (type: "attempted" | "cheated" | "today" | "joined" | "arena") => {
     setDetailType(type);
     if (type === "attempted") {
       setDetailTitle("Student Attempts");
@@ -121,6 +127,9 @@ const AdminDashboard = () => {
       setDetailTitle("Completed Today");
       const todayStr = new Date().toISOString().split('T')[0];
       setDetailList(scores.filter(s => !s.isCheated && (s.timestamp || "").startsWith(todayStr)));
+    } else if (type === "arena") {
+      setDetailTitle("Arena History");
+      setDetailList(arenaSessions);
     }
     setIsDetailOpen(true);
   };
@@ -156,6 +165,7 @@ const AdminDashboard = () => {
     { label: "Students Joined", value: totalStudents, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Cheated", value: cheatedCount, icon: ShieldAlert, color: "text-destructive", bg: "bg-destructive/5", onClick: () => showDetails("cheated") },
     { label: "Completed Today", value: completedToday, icon: History, color: "text-orange-600", bg: "bg-orange-50", onClick: () => showDetails("today") },
+    { label: "Arena Battles", value: arenaSessions.length, icon: Zap, color: "text-amber-600", bg: "bg-amber-50", onClick: () => showDetails("arena") },
   ];
 
   return (
@@ -251,43 +261,77 @@ const AdminDashboard = () => {
             ) : (
               detailList.map((item, idx) => (
                 <div key={idx} className="p-4 rounded-2xl bg-secondary/20 ring-1 ring-border/10 flex items-center justify-between group hover:bg-secondary/30 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="relative group/user">
-                      <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-sm transition-all ${item.isCheated ? "border-destructive/40" : "border-primary/20"}`}>
-                        {item.userPhoto ? (
-                          <img src={item.userPhoto} alt={item.userName} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className={`w-full h-full flex items-center justify-center font-black text-xs ${item.isCheated ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                            {item.userName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                  {detailType === 'arena' ? (
+                    <>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 ring-1 ring-amber-500/20">
+                          <Zap className="w-6 h-6 fill-current" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground">Arena Session: {item.code}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
+                            <Brain className="w-3 h-3" /> {item.quizTitle}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2 uppercase tracking-widest">
+                            Status: {item.status}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/arena/${item.code}/result`)}
+                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10"
+                        >
+                          View Results
+                        </Button>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mt-2">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4">
+                        <div className="relative group/user">
+                          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shadow-sm transition-all ${item.isCheated ? "border-destructive/40" : "border-primary/20"}`}>
+                            {item.userPhoto ? (
+                              <img src={item.userPhoto} alt={item.userName} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={`w-full h-full flex items-center justify-center font-black text-xs ${item.isCheated ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                                {item.userName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || <User className="w-4 h-4" />}
+                              </div>
+                            )}
                           </div>
-                        )}
+                          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${item.isCheated ? "bg-destructive" : "bg-primary"}`}>
+                            {item.isCheated ? <ShieldAlert className="w-2.5 h-2.5 text-white" /> : <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground flex items-center gap-2">
+                            {item.userName || "Unknown"}
+                            {item.isCheated && <span className="text-[8px] font-black uppercase text-destructive px-2 py-0.5 bg-destructive/10 rounded-full tracking-tighter">Banned</span>}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
+                            <Brain className="w-3 h-3" /> {item.quizTitle || "Untitled Quiz"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
+                            <Mail className="w-3 h-3" /> {item.userEmail || "No Email recorded"}
+                          </p>
+                        </div>
                       </div>
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${item.isCheated ? "bg-destructive" : "bg-primary"}`}>
-                        {item.isCheated ? <ShieldAlert className="w-2.5 h-2.5 text-white" /> : <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 justify-end mb-1">
+                          <Award className="w-3.5 h-3.5 text-primary" />
+                          <p className="font-black text-primary tracking-tighter text-lg">{item.isCheated ? "0%" : `${Math.round(item.percentage || 0)}%`}</p>
+                        </div>
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1 justify-end">
+                          <Calendar className="w-3 h-3" /> {new Date(item.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
-                    </div>
-                    <div>
-                      <p className="font-bold text-foreground flex items-center gap-2">
-                        {item.userName || "Unknown"}
-                        {item.isCheated && <span className="text-[8px] font-black uppercase text-destructive px-2 py-0.5 bg-destructive/10 rounded-full tracking-tighter">Banned</span>}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
-                        <Brain className="w-3 h-3" /> {item.quizTitle || "Untitled Quiz"}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-2">
-                        <Mail className="w-3 h-3" /> {item.userEmail || "No Email recorded"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 justify-end mb-1">
-                      <Award className="w-3.5 h-3.5 text-primary" />
-                      <p className="font-black text-primary tracking-tighter text-lg">{item.isCheated ? "0%" : `${Math.round(item.percentage || 0)}%`}</p>
-                    </div>
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1 justify-end">
-                      <Calendar className="w-3 h-3" /> {new Date(item.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
+                    </>
+                  )}
                 </div>
               ))
             )}

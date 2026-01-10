@@ -25,6 +25,56 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SystemBulletin from "./components/SystemBulletin";
 
 import MasterDashboard from "./pages/MasterDashboard";
+import ArenaJoin from "./pages/ArenaJoin";
+import ArenaCreate from "./pages/ArenaCreate";
+import ArenaLobby from "./pages/ArenaLobby";
+import ArenaMatch from "./pages/ArenaMatch";
+import ArenaResult from "./pages/ArenaResult";
+
+import { AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
+import PageTransition from "./components/PageTransition";
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+        <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+        <Route path="/quizzes" element={<PageTransition><QuizList /></PageTransition>} />
+
+        {/* General Protected Routes (Login required) */}
+        <Route path="/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
+        <Route path="/quiz/:quizId" element={<ProtectedRoute><PageTransition><QuizEntry /></PageTransition></ProtectedRoute>} />
+        <Route path="/quiz/:quizId/play" element={<ProtectedRoute><PageTransition><QuizPlay /></PageTransition></ProtectedRoute>} />
+        <Route path="/quiz/:quizId/result" element={<ProtectedRoute><PageTransition><QuizResult /></PageTransition></ProtectedRoute>} />
+
+        {/* Teacher Only Protected Routes */}
+        <Route path="/admin/dashboard" element={<ProtectedRoute requireTeacher><PageTransition><AdminDashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/create" element={<ProtectedRoute requireTeacher><PageTransition><CreateQuiz /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/edit/:quizId" element={<ProtectedRoute requireTeacher><PageTransition><CreateQuiz /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/quizzes" element={<ProtectedRoute requireTeacher><PageTransition><ManageQuizzes /></PageTransition></ProtectedRoute>} />
+
+        {/* Admin Only Protected Routes */}
+        <Route path="/admin/master-dashboard" element={<ProtectedRoute requireAdmin><PageTransition><MasterDashboard /></PageTransition></ProtectedRoute>} />
+
+        {/* Arena Routes */}
+        <Route path="/arena/join" element={<ProtectedRoute><PageTransition><ArenaJoin /></PageTransition></ProtectedRoute>} />
+        <Route path="/arena/create" element={<ProtectedRoute><PageTransition><ArenaCreate /></PageTransition></ProtectedRoute>} />
+        <Route path="/arena/:code/lobby" element={<ProtectedRoute><PageTransition><ArenaLobby /></PageTransition></ProtectedRoute>} />
+        <Route path="/arena/:code/match" element={<ProtectedRoute><PageTransition><ArenaMatch /></PageTransition></ProtectedRoute>} />
+        <Route path="/arena/:code/result" element={<ProtectedRoute><PageTransition><ArenaResult /></PageTransition></ProtectedRoute>} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,32 +84,7 @@ const App = () => (
         <Sonner />
         <SystemBulletin />
         <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/quizzes" element={<QuizList />} />
-
-            {/* General Protected Routes (Login required) */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/quiz/:quizId" element={<ProtectedRoute><QuizEntry /></ProtectedRoute>} />
-            <Route path="/quiz/:quizId/play" element={<ProtectedRoute><QuizPlay /></ProtectedRoute>} />
-            <Route path="/quiz/:quizId/result" element={<ProtectedRoute><QuizResult /></ProtectedRoute>} />
-
-            {/* Teacher Only Protected Routes */}
-            <Route path="/admin/dashboard" element={<ProtectedRoute requireTeacher><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/create" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
-            <Route path="/admin/edit/:quizId" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
-            <Route path="/admin/quizzes" element={<ProtectedRoute requireTeacher><ManageQuizzes /></ProtectedRoute>} />
-
-            {/* Admin Only Protected Routes */}
-            <Route path="/admin/master-dashboard" element={<ProtectedRoute requireAdmin><MasterDashboard /></ProtectedRoute>} />
-
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AnimatedRoutes />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -82,9 +82,15 @@ const QuizEntry = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <Card className="w-full max-w-lg p-6 md:p-12 rounded-[2.5rem] border-0 bg-white shadow-strong ring-1 ring-border/50 animate-in fade-in zoom-in duration-500">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft">
-            <Brain className="w-8 h-8 text-primary-foreground" />
-          </div>
+          {quiz.image ? (
+            <div className="w-full h-48 rounded-[2rem] overflow-hidden mb-6 shadow-soft ring-1 ring-primary/10">
+              <img src={quiz.image} alt={quiz.title} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-soft">
+              <Brain className="w-8 h-8 text-primary-foreground" />
+            </div>
+          )}
           <h1 className="text-3xl font-extrabold mb-3 tracking-tight">{quiz.title}</h1>
           <p className="text-muted-foreground font-medium uppercase tracking-[0.2em] text-[10px]">Academic Assessment Entry</p>
         </div>

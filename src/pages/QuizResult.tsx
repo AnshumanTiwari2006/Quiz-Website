@@ -226,9 +226,20 @@ const QuizResult = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-background rounded-2xl ring-1 ring-border/30">
-                  <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1 tracking-widest">Candidate</p>
-                  <p className="text-sm font-bold text-foreground truncate">{studentName}</p>
+                <div className="p-4 bg-background rounded-2xl ring-1 ring-border/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 border-2 border-primary/20 shrink-0">
+                    {profile?.photoURL || user?.photoURL ? (
+                      <img src={profile?.photoURL || user?.photoURL || ""} alt={studentName} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center font-black text-primary text-xs uppercase">
+                        {studentName[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[7px] font-black uppercase text-muted-foreground mb-0.5 tracking-widest opacity-60">Candidate</p>
+                    <p className="text-sm font-bold text-foreground truncate">{studentName}</p>
+                  </div>
                 </div>
                 {percentage >= 60 && !isCheated ? (
                   <Button
@@ -300,6 +311,12 @@ const QuizResult = () => {
                     <p className="font-bold text-lg tracking-tight text-foreground line-clamp-2" title={item.question}>
                       {item.question}
                     </p>
+
+                    {item.image && (
+                      <div className="w-full h-32 md:h-40 rounded-2xl overflow-hidden border border-border/10 bg-secondary/5">
+                        <img src={item.image} alt="Context" className="w-full h-full object-contain" />
+                      </div>
+                    )}
 
                     <div className="grid md:grid-cols-2 gap-3">
                       <div className="p-4 rounded-xl bg-secondary/10 ring-1 ring-border/10">

@@ -259,6 +259,7 @@ const QuizPlay = () => {
 
       return {
         question: q.question,
+        image: q.image,
         userAnswer: userAnswerStr || "No Answer",
         correctAnswer: correctAnswerStr,
         isCorrect,
@@ -367,6 +368,20 @@ const QuizPlay = () => {
                   <div className="mb-10">
                     <h3 className="text-xl md:text-2xl font-bold tracking-tight leading-snug text-foreground break-words">{currentQuestion.question}</h3>
                   </div>
+
+                  {currentQuestion.image && (
+                    <div className="mb-10 group relative max-w-2xl mx-auto rounded-[2rem] overflow-hidden border-2 border-white/50 shadow-soft ring-1 ring-primary/10">
+                      <img
+                        src={currentQuestion.image}
+                        alt="Question Context"
+                        className="w-full h-auto max-h-[400px] object-contain bg-white/50 cursor-zoom-in hover:scale-[1.02] transition-transform duration-500"
+                        onClick={() => window.open(currentQuestion.image, '_blank')}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <p className="text-white text-[10px] font-bold uppercase tracking-widest bg-primary/80 px-4 py-2 rounded-full">Click to Expand</p>
+                      </div>
+                    </div>
+                  )}
 
                   {(currentQuestion.type === "mcq" || currentQuestion.type === "multi_mcq") && currentQuestion.options && (
                     <div className="grid gap-4">

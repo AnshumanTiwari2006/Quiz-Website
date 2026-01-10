@@ -12,6 +12,7 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { motion } from "framer-motion";
 
 interface LiveStats {
   educators: number;
@@ -117,7 +118,7 @@ const Index = () => {
             return {
               id,
               name: userData?.name || "Expert Educator",
-              photoURL: isCreator ? "/photo-creator-1.jpeg" : userData?.photoURL,
+              photoURL: userData?.photoURL || (isCreator ? "/photo-creator-1.jpeg" : undefined),
               quizCount: data.count,
               totalEngagements: data.engagements
             };
@@ -149,7 +150,29 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Premium Animated Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            x: [0, -40, 0],
+            y: [0, -60, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-secondary/20 rounded-full blur-[120px]"
+        />
+      </div>
+
       <Navbar />
 
       {/* Hero Section */}
@@ -246,6 +269,74 @@ const Index = () => {
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Subjects</p>
             <p className="text-2xl font-black text-foreground tracking-tighter">{stats.subjects}</p>
           </div>
+        </div>
+
+        {/* Arena Battle Selection - NEW HERO SECTION */}
+        <div className="mb-24 px-4 overflow-hidden">
+          <Card className="max-w-5xl mx-auto rounded-[3.5rem] bg-foreground text-background shadow-strong border-0 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[80px] -mr-32 -mt-32 group-hover:bg-primary/30 transition-all duration-1000" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-[60px] -ml-24 -mb-24" />
+
+            <div className="grid md:grid-cols-2 gap-12 items-center p-10 md:p-16 relative z-10">
+              <div className="space-y-8 animate-in fade-in slide-in-from-left duration-1000">
+                <div className="inline-flex items-center gap-3 bg-white/10 rounded-full px-5 py-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Live Multiplayer</span>
+                </div>
+
+                <h2 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight text-white">
+                  Enter The <br />
+                  <span className="text-primary italic">Scholar Arena.</span>
+                </h2>
+
+                <p className="text-white/70 text-lg font-medium leading-relaxed max-w-sm">
+                  Battle your peers in real-time. Speed, accuracy, and synchronization. Who will claim the Grandmaster title?
+                </p>
+
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Button
+                    onClick={() => navigate('/arena/join')}
+                    className="rounded-full px-10 h-16 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-lg shadow-primary/25 border-0"
+                  >
+                    Quick Join <Zap className="ml-3 w-4 h-4 fill-current" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/arena/create')}
+                    className="rounded-full px-10 h-16 border-2 border-white/20 bg-transparent text-white font-black uppercase tracking-widest text-xs hover:bg-white hover:text-foreground transition-all"
+                  >
+                    Host a Battle
+                  </Button>
+                </div>
+              </div>
+
+              <div className="relative order-first md:order-last">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <div className="h-32 rounded-[2rem] bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center animate-float">
+                      <Trophy className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <div className="h-48 rounded-[2rem] bg-primary/10 backdrop-blur-sm border border-primary/20 flex flex-col items-center justify-center p-6 text-center animate-float [animation-delay:1s]">
+                      <p className="text-3xl font-black text-white mb-1">99%</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-white/40">Sync Rate</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4 pt-8">
+                    <div className="h-48 rounded-[2rem] bg-white/10 backdrop-blur-sm border border-white/20 flex flex-col items-center justify-center p-6 text-center animate-float [animation-delay:0.5s]">
+                      <Users className="w-10 h-10 text-white mb-4" />
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-white/40">Live Contenders</p>
+                    </div>
+                    <div className="h-32 rounded-[2rem] bg-secondary/10 backdrop-blur-sm border border-white/10 flex items-center justify-center animate-float [animation-delay:1.5s]">
+                      <Zap className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Continuous Scorer Carousel */}
@@ -449,7 +540,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="max-w-5xl mx-auto px-6 py-8 border-t border-border/50 text-center text-muted-foreground font-medium text-[10px] uppercase tracking-widest">
-        <p>© 2024 Scholar Synergy. Professional Assessment Infrastructure.</p>
+        <p>© 2026 Scholar Synergy. Professional Assessment Infrastructure.</p>
       </footer>
     </div>
   );

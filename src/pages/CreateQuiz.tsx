@@ -18,6 +18,7 @@ interface Question {
   id: string;
   type: "mcq" | "oneword" | "flashcard" | "truefalse" | "match" | "multi_mcq";
   question: string;
+  image?: string;
   options?: string[];
   answer: string;
   points: number;
@@ -47,8 +48,10 @@ const CreateQuiz = () => {
   const [targetClass, setTargetClass] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [quizImage, setQuizImage] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const quizImageInputRef = useRef<HTMLInputElement>(null);
 
   const { quizId } = useParams();
   const isEditing = !!quizId;
@@ -87,6 +90,7 @@ const CreateQuiz = () => {
             setSubject(quiz.subject || "");
             setTargetClass(quiz.class || "");
             setTeacherName(quiz.teacherName || "");
+            setQuizImage(quiz.image || "");
           } else {
             toast({
               title: "Quiz not found",
@@ -200,6 +204,23 @@ const CreateQuiz = () => {
     setQuestions(questions.filter(q => q.id !== id));
   };
 
+  const handleImageUpload = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      updateQuestion(id, "image", result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleQuizImageUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setQuizImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const saveQuiz = async () => {
     if (!title || questions.length === 0) {
       toast({
@@ -219,7 +240,9 @@ const CreateQuiz = () => {
       class: targetClass,
       teacherName,
       teacherId: user?.uid,
+      teacherPhoto: profile?.photoURL || "",
       questionCount: questions.length,
+      image: quizImage,
       questions,
       updatedAt: new Date().toISOString(),
     };
@@ -276,89 +299,121 @@ const CreateQuiz = () => {
 
         <Card className="p-8 rounded-[2.5rem] border-0 bg-background shadow-soft ring-1 ring-border/50 mb-10 overflow-hidden relative">
           <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-8">Basic Information</h2>
+          <div className="flex flex-col md:flex-row gap-10">
+            <div className="flex-1 space-y-8">
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">Basic Information</h2>
+              <div className="space-y-3">
+                <Label htmlFor="title" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Quiz Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter a descriptive title..."
+                  className="rounded-2xl border-2 border-border/10 h-14 text-lg font-bold focus:ring-primary/10 transition-all placeholder:text-muted-foreground/20 shadow-inner bg-white/50"
+                />
+              </div>
+            </div>
 
-          <div className="space-y-8">
+            <div className="w-full md:w-64 space-y-3">
+              <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Quiz Thumbnail</Label>
+              <div
+                onClick={() => quizImageInputRef.current?.click()}
+                className="group relative w-full h-40 rounded-3xl border-2 border-dashed border-border/20 bg-secondary/10 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden"
+              >
+                {quizImage ? (
+                  <>
+                    <img src={quizImage} alt="Quiz preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <p className="text-white text-[10px] font-bold uppercase tracking-widest">Change Image</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                      <Plus className="w-5 h-5 text-primary" />
+                    </div>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Upload Cover</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  ref={quizImageInputRef}
+                  onChange={(e) => e.target.files?.[0] && handleQuizImageUpload(e.target.files[0])}
+                  className="hidden"
+                  accept="image/*"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mt-8">
             <div className="space-y-3">
-              <Label htmlFor="title" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Quiz Title</Label>
+              <Label htmlFor="type" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Question Logic</Label>
+              <Select value={quizType} onValueChange={(value: any) => setQuizType(value)}>
+                <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                  <SelectItem value="mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Choice</SelectItem>
+                  <SelectItem value="multi_mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Answer MCQ</SelectItem>
+                  <SelectItem value="oneword" className="rounded-xl font-bold py-3 text-sm">Short Answer</SelectItem>
+                  <SelectItem value="flashcard" className="rounded-xl font-bold py-3 text-sm">Flashcards</SelectItem>
+                  <SelectItem value="truefalse" className="rounded-xl font-bold py-3 text-sm">True / False</SelectItem>
+                  <SelectItem value="match" className="rounded-xl font-bold py-3 text-sm">Matching</SelectItem>
+                  <SelectItem value="mixed" className="rounded-xl font-bold py-3 text-sm">Mixed Types</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="timer" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Time Limit (Sec)</Label>
               <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter a descriptive title..."
-                className="rounded-2xl border-2 border-border/10 h-14 text-lg font-bold focus:ring-primary/10 transition-all placeholder:text-muted-foreground/20 shadow-inner bg-white/50"
+                id="timer"
+                type="number"
+                value={timer}
+                onChange={(e) => setTimer(parseInt(e.target.value) || 0)}
+                placeholder="300"
+                className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <Label htmlFor="type" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Question Logic</Label>
-                <Select value={quizType} onValueChange={(value: any) => setQuizType(value)}>
-                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
-                    <SelectItem value="mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Choice</SelectItem>
-                    <SelectItem value="multi_mcq" className="rounded-xl font-bold py-3 text-sm">Multiple Answer MCQ</SelectItem>
-                    <SelectItem value="oneword" className="rounded-xl font-bold py-3 text-sm">Short Answer</SelectItem>
-                    <SelectItem value="flashcard" className="rounded-xl font-bold py-3 text-sm">Flashcards</SelectItem>
-                    <SelectItem value="truefalse" className="rounded-xl font-bold py-3 text-sm">True / False</SelectItem>
-                    <SelectItem value="match" className="rounded-xl font-bold py-3 text-sm">Matching</SelectItem>
-                    <SelectItem value="mixed" className="rounded-xl font-bold py-3 text-sm">Mixed Types</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="subject" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Subject (Recommended)</Label>
+              <Select value={subject} onValueChange={setSubject}>
+                <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                  <SelectValue placeholder="Select Subject" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                  {SUBJECTS.map(s => (
+                    <SelectItem key={s} value={s} className="rounded-xl font-bold py-3 text-sm">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="timer" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Time Limit (Sec)</Label>
-                <Input
-                  id="timer"
-                  type="number"
-                  value={timer}
-                  onChange={(e) => setTimer(parseInt(e.target.value) || 0)}
-                  placeholder="300"
-                  className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
-                />
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="class" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Grade / Class (Recommended)</Label>
+              <Select value={targetClass} onValueChange={setTargetClass}>
+                <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                  <SelectValue placeholder="Select Class" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                  {CLASSES.map(c => (
+                    <SelectItem key={c} value={c} className="rounded-xl font-bold py-3 text-sm">{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="subject" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Subject (Recommended)</Label>
-                <Select value={subject} onValueChange={setSubject}>
-                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
-                    <SelectValue placeholder="Select Subject" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
-                    {SUBJECTS.map(s => (
-                      <SelectItem key={s} value={s} className="rounded-xl font-bold py-3 text-sm">{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="class" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Grade / Class (Recommended)</Label>
-                <Select value={targetClass} onValueChange={setTargetClass}>
-                  <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
-                    <SelectValue placeholder="Select Class" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
-                    {CLASSES.map(c => (
-                      <SelectItem key={c} value={c} className="rounded-xl font-bold py-3 text-sm">{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3 md:col-span-2">
-                <Label htmlFor="teacher" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Educator / Teacher Name (Optional)</Label>
-                <Input
-                  id="teacher"
-                  value={teacherName}
-                  onChange={(e) => setTeacherName(e.target.value)}
-                  placeholder="Enter name..."
-                  className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
-                />
-              </div>
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="teacher" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Educator / Teacher Name (Optional)</Label>
+              <Input
+                id="teacher"
+                value={teacherName}
+                onChange={(e) => setTeacherName(e.target.value)}
+                placeholder="Enter name..."
+                className="rounded-2xl border-2 border-border/10 h-14 font-bold focus:ring-primary/10 shadow-inner bg-white/50"
+              />
             </div>
           </div>
         </Card>
@@ -465,6 +520,58 @@ const CreateQuiz = () => {
                           placeholder="Enter your question here..."
                           className="rounded-2xl border-2 border-border/10 min-h-[100px] p-5 md:p-6 text-base md:text-xl font-bold focus:bg-white bg-white/50 shadow-inner leading-relaxed"
                         />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground opacity-70 ml-1">Illustrative Image (Optional)</Label>
+                        <div className="flex items-start gap-6">
+                          <div
+                            onClick={() => {
+                              const input = document.getElementById(`img-input-${q.id}`) as HTMLInputElement;
+                              input.click();
+                            }}
+                            className="w-32 h-32 md:w-40 md:h-40 shrink-0 rounded-[2rem] border-2 border-dashed border-border/20 bg-secondary/5 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden relative group"
+                          >
+                            {q.image ? (
+                              <>
+                                <img src={q.image} alt="Question Illustrative" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <Trash2 className="w-5 h-5 text-white" onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateQuestion(q.id, "image", "");
+                                  }} />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-5 h-5 text-primary/40 group-hover:scale-110 transition-transform" />
+                                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 mt-2">Add Image</p>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-4 pt-2">
+                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                              Add an image to provide context, diagrams, or visual cues for this question. Ideal for Science, Geography, or Geometry modules.
+                            </p>
+                            <Input
+                              type="file"
+                              id={`img-input-${q.id}`}
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => e.target.files?.[0] && handleImageUpload(q.id, e.target.files[0])}
+                            />
+                            {q.image && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuestion(q.id, "image", "")}
+                                className="rounded-full h-8 text-[9px] font-bold uppercase tracking-widest border-destructive/20 text-destructive hover:bg-destructive hover:text-white"
+                              >
+                                Remove Image
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
                       {(q.type === "mcq" || q.type === "multi_mcq") && q.options && (
@@ -598,7 +705,7 @@ const CreateQuiz = () => {
           {isEditing ? "Save Changes" : "Deploy Quiz Module"}
         </Button>
       </main>
-    </div>
+    </div >
   );
 };
 

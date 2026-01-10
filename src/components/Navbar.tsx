@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
     Brain, Menu, LogOut, Home, BookOpen,
     MessageSquare, LayoutDashboard, LucideIcon,
-    User, History, Settings
+    User, History, Settings, Zap, Users, PlusCircle
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -33,6 +33,15 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, profile, logout } = useAuth();
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const handleLogout = async () => {
         await logout();
@@ -58,7 +67,12 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
     }
 
     return (
-        <header className="py-4 px-6 border-b border-border/50 bg-white/50 backdrop-blur-md sticky top-0 z-50">
+        <header className={cn(
+            "py-4 px-6 sticky top-0 z-50 transition-all duration-300",
+            scrolled
+                ? "bg-white/70 backdrop-blur-lg border-b border-primary/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] ring-1 ring-white/20"
+                : "bg-transparent border-b border-transparent"
+        )}>
             <div className="max-w-5xl mx-auto flex items-center justify-between">
                 <div
                     className="flex items-center gap-3 cursor-pointer group"
@@ -99,6 +113,32 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
                             {link.label}
                         </Button>
                     ))}
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="rounded-full border-2 border-primary/20 text-primary font-bold text-[10px] uppercase tracking-[0.2em] px-6 h-10 hover:bg-primary/5 hover:border-primary transition-all gap-2"
+                            >
+                                <Zap className="w-3.5 h-3.5 fill-primary/20" />
+                                Arena
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-52 rounded-[2rem] p-2 border-0 shadow-strong ring-1 ring-border/50 bg-background/95 backdrop-blur-md" align="end">
+                            <DropdownMenuItem
+                                onClick={() => navigate('/arena/join')}
+                                className="rounded-xl h-11 px-4 cursor-pointer focus:bg-primary focus:text-white font-bold text-[10px] uppercase tracking-widest gap-3 transition-all"
+                            >
+                                <Users className="w-4 h-4" /> Quick Join
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => navigate('/arena/create')}
+                                className="rounded-xl h-11 px-4 cursor-pointer focus:bg-primary focus:text-white font-bold text-[10px] uppercase tracking-widest gap-3 transition-all"
+                            >
+                                <PlusCircle className="w-4 h-4" /> Host Battle
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
                     {user ? (
                         <div className="flex items-center gap-2 ml-2 pl-4 border-l border-border/20">

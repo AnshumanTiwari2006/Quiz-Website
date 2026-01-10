@@ -7,6 +7,7 @@ import { Brain, Clock, FileQuestion, ArrowRight, Home, Filter, Sparkles, BookOpe
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
 
@@ -175,21 +176,36 @@ const QuizList = () => {
                 className="group overflow-hidden rounded-[2.5rem] border-0 bg-background shadow-soft hover:shadow-strong transition-all cursor-pointer ring-1 ring-border/50 relative"
                 onClick={() => navigate(`/quiz/${quiz.id}`)}
               >
-                {newQuizIds.has(quiz.id) && (
-                  <div className="absolute top-6 right-6 z-10 pointer-events-none">
-                    <Badge className="bg-primary text-white border-0 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest animate-sparkle shadow-[0_0_20px_rgba(235,94,40,0.4)] flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 fill-white" />
-                      New
-                    </Badge>
-                  </div>
-                )}
-                <div className="p-6 md:p-8 pb-10">
-                  <div className="flex justify-between items-start mb-8">
-                    <div className="w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center group-hover:bg-primary transition-all duration-300">
+                <div className="relative">
+                  {quiz.image ? (
+                    <div className="h-48 w-full overflow-hidden">
+                      <img src={quiz.image} alt={quiz.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
+                    </div>
+                  ) : (
+                    <div className="h-48 w-full bg-gradient-to-br from-primary/10 via-secondary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none" />
+                      <Brain className="w-16 h-16 text-primary/10 group-hover:scale-125 transition-transform duration-700" />
+                    </div>
+                  )}
+
+                  {newQuizIds.has(quiz.id) && (
+                    <div className="absolute top-6 right-6 z-10 pointer-events-none">
+                      <Badge className="bg-primary text-white border-0 rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest animate-sparkle shadow-[0_0_20px_rgba(235,94,40,0.4)] flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 fill-white" />
+                        New
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6 md:p-8 pb-10 relative">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="absolute -top-10 left-8 w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center group-hover:bg-primary transition-all duration-300 shadow-strong group-hover:-top-12">
                       <Brain className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
                     </div>
                     {quiz.class && (
-                      <Badge className="bg-primary/10 text-primary border-0 rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                      <Badge className="bg-primary/10 text-primary border-0 rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ml-auto">
                         {quiz.class}
                       </Badge>
                     )}
@@ -217,11 +233,18 @@ const QuizList = () => {
                   </div>
 
                   {quiz.teacherName && (
-                    <div className="flex items-center gap-2 mb-8 mt-[-10px] opacity-80">
-                      <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="w-3 h-3 text-primary" />
+                    <div className="flex items-center gap-3 mb-8 mt-[-10px] opacity-90 group/teacher">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20 overflow-hidden shrink-0 group-hover/teacher:border-primary transition-colors">
+                        {quiz.teacherPhoto ? (
+                          <img src={quiz.teacherPhoto} alt={quiz.teacherName} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-4 h-4 text-primary" />
+                        )}
                       </div>
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{quiz.teacherName}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-foreground/80 group-hover/teacher:text-primary transition-colors">{quiz.teacherName}</span>
+                        <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Registered Educator</span>
+                      </div>
                     </div>
                   )}
 
