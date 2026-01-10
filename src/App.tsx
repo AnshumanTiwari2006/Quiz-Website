@@ -22,6 +22,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SystemBulletin from "./components/SystemBulletin";
+
+import MasterDashboard from "./pages/MasterDashboard";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,6 +32,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <SystemBulletin />
         <BrowserRouter>
           <Routes>
             {/* Public Routes */}
@@ -49,6 +53,9 @@ const App = () => (
             <Route path="/admin/create" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
             <Route path="/admin/edit/:quizId" element={<ProtectedRoute requireTeacher><CreateQuiz /></ProtectedRoute>} />
             <Route path="/admin/quizzes" element={<ProtectedRoute requireTeacher><ManageQuizzes /></ProtectedRoute>} />
+
+            {/* Admin Only Protected Routes */}
+            <Route path="/admin/master-dashboard" element={<ProtectedRoute requireAdmin><MasterDashboard /></ProtectedRoute>} />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />

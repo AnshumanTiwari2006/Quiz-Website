@@ -6,11 +6,12 @@ import { auth, db } from "@/lib/firebase";
 interface UserProfile {
     uid: string;
     email: string | null;
-    role: "student" | "teacher";
+    role: "student" | "teacher" | "admin" | "moderator" | "viewer";
     name: string;
     subjects?: string[];
     classes?: string[];
     schoolClass?: string;
+    isLocked?: boolean;
 }
 
 interface AuthContextType {
@@ -42,7 +43,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    setProfile(docSnap.data() as UserProfile);
+                    const data = docSnap.data() as UserProfile;
+                    // Master Admin Override
+                    if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
+                        data.role = "admin";
+                    }
+                    setProfile(data);
+                } else if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
+                    // Even if record doesn't exist in Firestore, hardcode the admin profile
+                    setProfile({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        role: "admin",
+                        name: "Master Admin",
+                    });
                 }
             } else {
                 setProfile(null);

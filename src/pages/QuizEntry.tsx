@@ -124,7 +124,7 @@ const QuizEntry = () => {
 
           <Button
             type="submit"
-            className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-primary/95 transition-all text-lg font-black tracking-tight"
+            className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.02] transition-all text-lg font-black tracking-tight border-0"
           >
             AUTHORIZE & START
             <ArrowRight className="ml-3 h-5 w-5" />

@@ -39,7 +39,8 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
         navigate("/");
     };
 
-    const isAdmin = profile?.role === "teacher";
+    const isTeacher = profile?.role === "teacher";
+    const isAdminRole = ["admin", "moderator", "viewer"].includes(profile?.role || "");
 
     const navLinks: NavLink[] = [
         { label: "Home", path: "/", icon: Home },
@@ -47,10 +48,12 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
         { label: "Contact Us", path: "/contact", icon: MessageSquare },
     ];
 
-    if (isAdmin) {
+    if (isAdminRole) {
+        navLinks.push({ label: "Master Panel", path: "/admin/master-dashboard", icon: Settings });
+    } else if (isTeacher) {
         navLinks.push({ label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard });
-    } else {
-        navLinks.push({ label: "Admin Login", path: "/admin/login", icon: LayoutDashboard });
+    } else if (!user) {
+        navLinks.push({ label: "Login", path: "/admin/login", icon: LayoutDashboard });
     }
 
     return (

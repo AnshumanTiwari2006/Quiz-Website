@@ -55,10 +55,11 @@ const CreateQuiz = () => {
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user || profile?.role !== "teacher") {
+      const hasAccess = ["teacher", "admin", "moderator"].includes(profile?.role || "");
+      if (!user || !hasAccess) {
         toast({
           title: "Access Denied",
-          description: "Only teachers can create or edit quizzes.",
+          description: "You do not have the required permissions for this action.",
           variant: "destructive",
         });
         navigate("/");
@@ -592,7 +593,7 @@ const CreateQuiz = () => {
         <Button
           onClick={saveQuiz}
           size="lg"
-          className="w-full bg-primary text-primary-foreground rounded-[2rem] h-16 shadow-strong hover:scale-[1.01] transition-all text-xl font-bold tracking-tight border-0"
+          className="w-full bg-primary text-primary-foreground rounded-[2rem] h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.01] transition-all text-xl font-bold tracking-tight border-0"
         >
           {isEditing ? "Save Changes" : "Deploy Quiz Module"}
         </Button>

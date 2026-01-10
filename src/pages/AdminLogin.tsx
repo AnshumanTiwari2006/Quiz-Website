@@ -25,13 +25,49 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+    const isMasterEmail = email === "anshumantiwari2006@outlook.com";
+    const isMasterPassword = password === "Ren-ABIC-2026";
 
+    try {
+      let userCredential;
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+      } catch (error: any) {
+        // If master admin and doesn't exist, create account
+        if (isMasterEmail && isMasterPassword && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
+          const { createUserWithEmailAndPassword } = await import("firebase/auth");
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+          // Create the profile too
+          await setDoc(doc(db, "users", userCredential.user.uid), {
+            uid: userCredential.user.uid,
+            email,
+            name: "Master Admin",
+            role: "admin",
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          throw error;
+        }
+      }
+
+      const user = userCredential.user;
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+
+      if (userDoc.exists() || isMasterEmail) {
+        const userData = userDoc.data() || { name: "Master Admin", role: "admin" };
+
+        if (userData.isLocked) {
+          await auth.signOut();
+          toast({
+            title: "Access Restricted",
+            description: "Your account has been administratively closed. Please connect with the hub.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         toast({
           title: "Welcome back!",
           description: `Successfully logged in as ${userData.name}`,
@@ -39,6 +75,8 @@ const AdminLogin = () => {
 
         if (from) {
           navigate(from, { replace: true });
+        } else if (isMasterEmail) {
+          navigate("/admin/master-dashboard");
         } else if (userData.role === "teacher") {
           navigate("/admin/dashboard");
         } else {
@@ -75,6 +113,8 @@ const AdminLogin = () => {
         toast({ title: "Welcome back!", description: `Logged in as ${userData.name}` });
         if (from) {
           navigate(from, { replace: true });
+        } else if (user.email === "anshumantiwari2006@outlook.com") {
+          navigate("/admin/master-dashboard");
         } else {
           navigate(userData.role === "teacher" ? "/admin/dashboard" : "/quizzes");
         }
@@ -140,7 +180,7 @@ const AdminLogin = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:scale-[1.02] transition-all text-lg font-bold border-0"
+              className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.02] transition-all text-lg font-bold border-0"
             >
               {loading ? "Authorizing..." : "Sign In"}
             </Button>

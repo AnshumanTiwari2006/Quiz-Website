@@ -209,7 +209,7 @@ const Signup = () => {
                     </div>
 
                     <div className="flex flex-col gap-4 pt-6">
-                        <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:scale-[1.02] transition-all text-lg font-bold border-0">
+                        <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-2xl h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.02] transition-all text-lg font-bold border-0">
                             {loading ? "Creating Profile..." : "Create Account"}
                         </Button>
 
@@ -231,7 +231,7 @@ const Signup = () => {
 
                 <div className="mt-8 text-center flex flex-col gap-3">
                     <p className="text-sm text-muted-foreground font-medium">
-                        Already dynamic? <Button variant="link" className="p-0 h-auto font-bold text-primary" onClick={() => navigate('/admin/login')}>Authorize Login</Button>
+                        Already dynamic? <Button variant="link" className="p-0 h-auto font-bold text-primary" onClick={() => navigate('/admin/login')}>Sign In</Button>
                     </p>
                     <Button variant="ghost" onClick={() => navigate('/')} className="rounded-full font-bold text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all px-6 py-2 mx-auto">
                         ← Back to Mission Control
