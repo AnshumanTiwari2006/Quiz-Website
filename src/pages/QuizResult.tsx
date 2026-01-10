@@ -68,6 +68,7 @@ const QuizResult = () => {
           teacherName: data.teacherName || "",
           userId: user.uid,
           userName: profile?.name || user.displayName || "Student",
+          userPhoto: profile?.photoURL || user.photoURL || "",
           userEmail: user.email,
           score: data.score,
           total: data.total,
