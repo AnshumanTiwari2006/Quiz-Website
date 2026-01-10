@@ -50,6 +50,7 @@ const Navbar = ({ extraLinks = [] }: NavbarProps) => {
 
     if (isAdminRole) {
         navLinks.push({ label: "Master Panel", path: "/admin/master-dashboard", icon: Settings });
+        navLinks.push({ label: "Educator Central", path: "/admin/dashboard", icon: LayoutDashboard });
     } else if (isTeacher) {
         navLinks.push({ label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard });
     } else if (!user) {

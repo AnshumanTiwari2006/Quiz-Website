@@ -55,7 +55,7 @@ const CreateQuiz = () => {
 
   useEffect(() => {
     if (!authLoading) {
-      const hasAccess = ["teacher", "admin", "moderator"].includes(profile?.role || "");
+      const hasAccess = ["teacher", "admin", "moderator", "viewer"].includes(profile?.role || "");
       if (!user || !hasAccess) {
         toast({
           title: "Access Denied",

@@ -33,7 +33,10 @@ const ManageQuizzes = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && (!user || profile?.role !== "teacher")) {
+    const isAdminRole = ["admin", "moderator", "viewer"].includes(profile?.role || "");
+    const isTeacher = profile?.role === "teacher";
+
+    if (!authLoading && (!user || (!isTeacher && !isAdminRole))) {
       navigate("/admin/login");
       return;
     }
