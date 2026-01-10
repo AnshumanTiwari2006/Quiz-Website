@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Zap, Clock, Trophy, Users, ShieldAlert, ArrowRight, Brain, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { doc, onSnapshot, updateDoc, collection, getDoc, runTransaction } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, collection, getDoc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -112,6 +112,22 @@ const ArenaMatch = () => {
         }
     }, [session?.currentQuestionIndex, quizQuestions, user?.uid, session?.hostId, session?.settings?.manualPace]);
 
+    // Heartbeat Logic: Mark session as active every 30s
+    useEffect(() => {
+        if (!session || user?.uid !== session.hostId || session.status === "finished") return;
+
+        const heartbeatInterval = setInterval(async () => {
+            try {
+                const sessionRef = doc(db, "arena_sessions", code!.toUpperCase());
+                await updateDoc(sessionRef, { lastHeartbeat: serverTimestamp() });
+            } catch (err) {
+                console.error("Heartbeat failed:", err);
+            }
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(heartbeatInterval);
+    }, [session?.status, user?.uid, session?.hostId, code]);
+
     const handleAnswer = async (selectedAnswer: string) => {
         if (hasAnswered || timeLeft === 0 || !user || !session) return;
 
@@ -139,6 +155,20 @@ const ArenaMatch = () => {
             });
         } catch (e) {
             console.error("Score update failed:", e);
+        }
+    };
+
+    const handleEndSession = async () => {
+        if (!isHost) return;
+        if (!window.confirm("Abort the battle? This will end the session for all participants.")) return;
+
+        try {
+            const sessionRef = doc(db, "arena_sessions", code!.toUpperCase());
+            await updateDoc(sessionRef, { status: "finished" });
+            toast({ title: "Battle Aborted", description: "You have ended the live session." });
+        } catch (error) {
+            console.error("Failed to end session:", error);
+            toast({ title: "Operation Failed", variant: "destructive" });
         }
     };
 
@@ -458,17 +488,36 @@ const ArenaMatch = () => {
                         </AnimatePresence>
 
                         {/* Host Next Control */}
-                        {isHost && (
-                            <div className="mt-12 flex justify-center">
+                        <div className="mt-12 flex flex-col md:flex-row justify-center gap-4">
+                            {isHost && (
+                                <>
+                                    <Button
+                                        onClick={handleEndSession}
+                                        variant="outline"
+                                        className="rounded-full border-destructive/20 text-destructive h-14 px-8 font-black uppercase tracking-widest hover:bg-destructive hover:text-white transition-all gap-3"
+                                    >
+                                        <ShieldAlert className="w-5 h-5" />
+                                        Abort
+                                    </Button>
+                                    <Button
+                                        onClick={handleNextQuestion}
+                                        className="rounded-full bg-foreground text-background h-14 px-10 font-black uppercase tracking-[0.2em] shadow-strong hover:scale-105 transition-all gap-3 flex-1 md:flex-none"
+                                    >
+                                        Next
+                                        <ArrowRight className="w-5 h-5" />
+                                    </Button>
+                                </>
+                            )}
+                            {(canPlay && hasAnswered) && (
                                 <Button
-                                    onClick={handleNextQuestion}
-                                    className="rounded-full bg-foreground text-background h-14 px-10 font-black uppercase tracking-[0.2em] shadow-strong hover:scale-105 transition-all gap-3"
+                                    onClick={() => navigate("/quizzes")}
+                                    variant="ghost"
+                                    className="rounded-full h-14 px-10 font-black uppercase tracking-widest text-muted-foreground hover:bg-secondary/10"
                                 >
-                                    Next
-                                    <ArrowRight className="w-5 h-5" />
+                                    Exit Match
                                 </Button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -27,11 +27,6 @@ const AdminLogin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (role === "teacher" && teacherCode !== "T-ABIC-EDU") {
-      toast({ title: "Authorized Personnel Only", description: "Invalid teacher verification code.", variant: "destructive" });
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -72,11 +67,6 @@ const AdminLogin = () => {
   };
 
   const handleGoogleAuth = async () => {
-    if (role === "teacher" && teacherCode !== "T-ABIC-EDU") {
-      toast({ title: "Invalid Code", description: "Teacher verification code is incorrect.", variant: "destructive" });
-      return;
-    }
-
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);

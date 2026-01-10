@@ -42,13 +42,8 @@ const Signup = () => {
         setLoading(true);
 
         if (role === "teacher") {
-            if (schoolCode !== "T-ABIC-EDU") {
-                toast({ title: "Invalid Code", description: "Only authorized teachers can sign up.", variant: "destructive" });
-                setLoading(false);
-                return;
-            }
             if (phoneNumber.length < 10 || selectedSubjects.length === 0 || selectedClasses.length === 0) {
-                toast({ title: "Missing Info", description: "Phone, Subjects, and Classes are mandatory for teachers.", variant: "destructive" });
+                toast({ title: "Incomplete Profile", description: "Educators must provide contact and class details.", variant: "destructive" });
                 setLoading(false);
                 return;
             }
@@ -71,7 +66,11 @@ const Signup = () => {
                 phone: phoneNumber,
                 address: physicalAddress,
                 ...(role === "teacher"
-                    ? { subjects: finalSubjects.filter(Boolean), classes: selectedClasses }
+                    ? {
+                        subjects: finalSubjects.filter(Boolean),
+                        classes: selectedClasses,
+                        teacherCode: schoolCode // Verified by server-side Firestore Rules
+                    }
                     : { schoolClass: studentClass }),
                 createdAt: new Date().toISOString()
             };

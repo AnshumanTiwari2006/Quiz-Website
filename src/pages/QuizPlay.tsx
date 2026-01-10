@@ -314,13 +314,23 @@ const QuizPlay = () => {
               </div>
             </div>
             {quiz.timer > 0 && (
-              <Badge
-                variant={timeLeft < 60 ? "destructive" : "secondary"}
-                className={`rounded-full px-4 py-1.5 font-mono text-xs border-0 ${timeLeft < 60 ? 'animate-pulse bg-destructive text-white' : 'bg-primary/10 text-primary'}`}
-              >
-                <Clock className="mr-2 h-3.5 w-3.5" />
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.confirm("Abandon this assessment? No progress will be saved.") && navigate("/quizzes")}
+                  className="rounded-full px-4 h-9 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10"
+                >
+                  Abandon Quiz
+                </Button>
+                <Badge
+                  variant={timeLeft < 60 ? "destructive" : "secondary"}
+                  className={`rounded-full px-4 py-1.5 font-mono text-xs border-0 ${timeLeft < 60 ? 'animate-pulse bg-destructive text-white' : 'bg-primary/10 text-primary'}`}
+                >
+                  <Clock className="mr-2 h-3.5 w-3.5" />
+                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                </Badge>
+              </div>
             )}
           </div>
           <div className="w-full bg-white/30 rounded-full h-1.5 overflow-hidden">

@@ -205,6 +205,11 @@ const CreateQuiz = () => {
   };
 
   const handleImageUpload = (id: string, file: File) => {
+    // Robustness: Limit Base64 size to 1MB to prevent DB bloat
+    if (file.size > 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max size is 1MB. Please compress your image.", variant: "destructive" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -214,6 +219,10 @@ const CreateQuiz = () => {
   };
 
   const handleQuizImageUpload = (file: File) => {
+    if (file.size > 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max size is 1MB for cover images.", variant: "destructive" });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       setQuizImage(e.target?.result as string);

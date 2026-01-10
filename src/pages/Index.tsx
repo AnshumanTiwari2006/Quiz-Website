@@ -114,7 +114,7 @@ const Index = () => {
           .map(([id, data]) => {
             const userData: any = users.find(u => u.id === id);
             const fullName = userData?.name || "";
-            const isCreator = fullName.toLowerCase().includes("rajiv") || fullName.toLowerCase().includes("tiwari");
+            const isCreator = userData?.email === "anshumantiwari2006@gmail.com";
             return {
               id,
               name: userData?.name || "Expert Educator",

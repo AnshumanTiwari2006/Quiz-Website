@@ -38,7 +38,9 @@ import {
     Pause,
     Play,
     Edit,
-    Zap
+    Zap,
+    KeyRound,
+    ShieldCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -58,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { collection, getDocs, deleteDoc, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import Papa from "papaparse";
@@ -84,6 +86,8 @@ const MasterDashboard = () => {
     const [searchQuiz, setSearchQuiz] = useState("");
     const [searchArena, setSearchArena] = useState("");
     const [broadcastMessage, setBroadcastMessage] = useState("");
+    const [teacherCodeSetting, setTeacherCodeSetting] = useState("");
+    const [isUpdatingCode, setIsUpdatingCode] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [selectedQuizAnalytics, setSelectedQuizAnalytics] = useState<any>(null);
     const [newPassword, setNewPassword] = useState("");
@@ -124,6 +128,25 @@ const MasterDashboard = () => {
             });
             setArenaSessions(sortedArena);
             console.log("Dashboard: Arena Data Fetched:", sortedArena.length);
+
+            // AUTO-JANITOR: Clean up stale sessions (no heartbeat for 15+ mins)
+            const fifteenMinsAgo = Date.now() - (15 * 60 * 1000);
+            const staleSessions = sortedArena.filter(s =>
+                (s.status === 'active' || s.status === 'waiting') &&
+                s.lastHeartbeat &&
+                s.lastHeartbeat.toMillis() < fifteenMinsAgo
+            );
+
+            if (staleSessions.length > 0) {
+                console.log(`Janitor: Cleaning ${staleSessions.length} ghost sessions.`);
+                staleSessions.forEach(async (s) => {
+                    await updateDoc(doc(db, "arena_sessions", s.id), { status: "finished" });
+                });
+                // Update local state to reflect clean list
+                setArenaSessions(prev => prev.map(s =>
+                    staleSessions.some(ss => ss.id === s.id) ? { ...s, status: "finished" } : s
+                ));
+            }
 
             // Final Stats Update consolidated
             setStats({
@@ -226,6 +249,49 @@ const MasterDashboard = () => {
         setNewPassword("");
     };
 
+    // Load Teacher Code from System Config
+    useEffect(() => {
+        const loadSystemConfig = async () => {
+            try {
+                const configSnap = await getDoc(doc(db, "system", "config"));
+                if (configSnap.exists()) {
+                    setTeacherCodeSetting(configSnap.data().teacherCode || "");
+                }
+            } catch (err) {
+                console.error("Failed to load system config:", err);
+            }
+        };
+        if (isAdmin) loadSystemConfig();
+    }, [isAdmin]);
+
+    const updateTeacherCode = async () => {
+        if (!isAdmin) return toast({ title: "Access Denied", variant: "destructive" });
+        if (!teacherCodeSetting) return toast({ title: "Configuration Required", description: "Teacher code cannot be empty.", variant: "destructive" });
+
+        setIsUpdatingCode(true);
+        try {
+            await setDoc(doc(db, "system", "config"), {
+                teacherCode: teacherCodeSetting,
+                updatedAt: new Date().toISOString(),
+                updatedBy: user?.uid
+            }, { merge: true });
+
+            toast({
+                title: "Protocol Success",
+                description: "Teacher verification gateway updated across all nodes.",
+                className: "bg-success text-white border-0"
+            });
+        } catch (error: any) {
+            toast({
+                title: "Gateway Rejection",
+                description: error.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsUpdatingCode(false);
+        }
+    };
+
     const toggleQuizStar = async (quizId: string, currentFeatured: boolean) => {
         if (!isAdmin) return toast({ title: "Access Denied", variant: "destructive" });
         try {
@@ -245,6 +311,28 @@ const MasterDashboard = () => {
             toast({ title: currentInactive ? "Quiz Active" : "Quiz Deactivated" });
         } catch (error) {
             toast({ title: "Update Failed", variant: "destructive" });
+        }
+    };
+
+    const terminateArenaSession = async (sessionId: string) => {
+        if (!isAdmin && !isModerator) return toast({ title: "Access Denied", variant: "destructive" });
+        try {
+            await updateDoc(doc(db, "arena_sessions", sessionId), { status: "finished" });
+            setArenaSessions(arenaSessions.map(s => s.id === sessionId ? { ...s, status: "finished" } : s));
+            toast({ title: "Session Terminated", description: "Battle has been force-closed." });
+        } catch (error) {
+            toast({ title: "Abortion Failed", variant: "destructive" });
+        }
+    };
+
+    const deleteArenaSession = async (sessionId: string) => {
+        if (!isAdmin) return toast({ title: "Access Denied", variant: "destructive" });
+        try {
+            await deleteDoc(doc(db, "arena_sessions", sessionId));
+            setArenaSessions(arenaSessions.filter(s => s.id !== sessionId));
+            toast({ title: "Archive Deleted", description: "Session record purged from registry." });
+        } catch (error) {
+            toast({ title: "Purge Failed", variant: "destructive" });
         }
     };
 
@@ -1005,14 +1093,39 @@ const MasterDashboard = () => {
                                                         </Badge>
                                                     </td>
                                                     <td className="py-6 text-right">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => navigate(`/arena/${s.code}/result`)}
-                                                            className="rounded-xl font-bold text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
-                                                        >
-                                                            Review Intel
-                                                        </Button>
+                                                        <div className="flex items-center justify-end gap-2 pr-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => navigate(`/arena/${s.code}/result`)}
+                                                                className="rounded-xl h-11 w-11 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
+                                                                title="Review Intel"
+                                                            >
+                                                                <BarChart3 className="w-5 h-5" />
+                                                            </Button>
+                                                            {(s.status === 'active' || s.status === 'waiting') && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => terminateArenaSession(s.id)}
+                                                                    className="rounded-xl h-11 w-11 text-muted-foreground hover:bg-amber-500/10 hover:text-amber-500 transition-all"
+                                                                    title="Force End Session"
+                                                                >
+                                                                    <Pause className="w-5 h-5" />
+                                                                </Button>
+                                                            )}
+                                                            {isAdmin && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => deleteArenaSession(s.id)}
+                                                                    className="rounded-xl h-11 w-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+                                                                    title="Purge Record"
+                                                                >
+                                                                    <Trash2 className="w-5 h-5" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))
@@ -1052,27 +1165,35 @@ const MasterDashboard = () => {
                             </Card>
 
                             <Card className="p-10 rounded-[3rem] border-0 bg-background shadow-medium hover:shadow-strong transition-all ring-1 ring-border/50 relative overflow-hidden group">
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-colors" />
-                                <div className="w-16 h-16 bg-amber-500/5 rounded-[1.5rem] flex items-center justify-center mb-8 ring-2 ring-amber-500/10 shadow-inner group-hover:scale-110 transition-transform">
-                                    <UserCog className="w-8 h-8 text-amber-600" />
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-colors" />
+                                <div className="w-16 h-16 bg-purple-500/5 rounded-[1.5rem] flex items-center justify-center mb-8 ring-2 ring-purple-500/10 shadow-inner group-hover:scale-110 transition-transform">
+                                    <KeyRound className="w-8 h-8 text-purple-600" />
                                 </div>
-                                <h3 className="text-2xl font-black mb-4 tracking-tight text-foreground">Moderator configuration</h3>
+                                <h3 className="text-2xl font-black mb-4 tracking-tight text-foreground">Teacher Credentials</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed font-bold mb-8">
-                                    Define dynamic requirements for registration. Add fields like "ID Number", "Department", or "Bio" for all new users.
+                                    Manage the primary verification gateway for new teacher registrations. Ensure this code is cycled during security audits.
                                 </p>
                                 <div className="space-y-4">
-                                    <div className="flex gap-2">
-                                        <Input placeholder="e.g. Student ID" className="h-14 rounded-2xl border-2 border-border/10" />
-                                        <Button variant="outline" className="h-14 rounded-2xl font-bold">Add Field</Button>
+                                    <div className="relative">
+                                        <Input
+                                            placeholder="Enter Global Verification Code"
+                                            className="h-14 rounded-2xl border-2 border-border/10 pl-12 font-mono font-bold"
+                                            value={teacherCodeSetting}
+                                            onChange={(e) => setTeacherCodeSetting(e.target.value)}
+                                        />
+                                        <Zap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600 animate-pulse" />
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {["ID Number", "Department", "Section"].map(field => (
-                                            <Badge key={field} variant="secondary" className="px-3 py-1 rounded-full font-bold text-[9px] uppercase tracking-widest gap-1 border-0">
-                                                {field} <X className="w-3 h-3 cursor-pointer opacity-40 hover:opacity-100" />
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                    <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest pl-1 pt-2">Active in live signup protocol</p>
+                                    <Button
+                                        onClick={updateTeacherCode}
+                                        disabled={isUpdatingCode || !isAdmin}
+                                        className="w-full h-14 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest gap-2 transition-all shadow-lg shadow-purple-600/20"
+                                    >
+                                        {isUpdatingCode ? "Rewriting Gateway..." : "Update Verification Protocol"}
+                                        {!isUpdatingCode && <ShieldCheck className="w-4 h-4" />}
+                                    </Button>
+                                    <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest text-center pt-2">
+                                        Last Updated: {new Date().toLocaleDateString()}
+                                    </p>
                                 </div>
                             </Card>
 

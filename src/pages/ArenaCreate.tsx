@@ -7,7 +7,7 @@ import { Brain, Zap, Plus, Search, Filter, Clock, FileQuestion, User } from "luc
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
-import { collection, getDocs, query, orderBy, doc, setDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const ArenaCreate = () => {
@@ -75,6 +75,7 @@ const ArenaCreate = () => {
                 currentQuestionIndex: 0,
                 participantCount: 0,
                 createdAt: new Date().toISOString(),
+                lastHeartbeat: serverTimestamp(),
                 isTeacherSession: profile?.role === "teacher" || profile?.role === "admin",
                 settings: {
                     timePerQuestion: secondsPerQuestion,
