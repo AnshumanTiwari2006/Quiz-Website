@@ -37,7 +37,10 @@ const AdminDashboard = () => {
   const [detailList, setDetailList] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!authLoading && (!user || profile?.role !== "teacher")) {
+    const isAdminRole = ["admin", "moderator", "viewer"].includes(profile?.role || "");
+    const isTeacher = profile?.role === "teacher";
+
+    if (!authLoading && (!user || (!isTeacher && !isAdminRole))) {
       navigate("/admin/login");
       return;
     }

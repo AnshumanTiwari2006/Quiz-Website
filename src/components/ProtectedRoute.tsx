@@ -24,13 +24,14 @@ const ProtectedRoute = ({ children, requireTeacher = false, requireAdmin = false
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
-    const isAdmin = ["admin", "moderator", "viewer"].includes(profile?.role || "");
+    const isAdminRole = ["admin", "moderator", "viewer"].includes(profile?.role || "");
 
-    if (requireAdmin && !isAdmin) {
+    if (requireAdmin && !isAdminRole) {
         return <Navigate to="/quizzes" replace />;
     }
 
-    if (profile?.role === "admin") {
+    // Admins, Moderators, and Viewers inherit all teacher permissions
+    if (isAdminRole) {
         return <>{children}</>;
     }
 
