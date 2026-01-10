@@ -4,9 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ProtectedRouteProps {
     children: React.ReactNode;
     requireTeacher?: boolean;
+    requireAdmin?: boolean;
 }
 
-const ProtectedRoute = ({ children, requireTeacher = false }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, requireTeacher = false, requireAdmin = false }: ProtectedRouteProps) => {
     const { user, profile, loading } = useAuth();
     const location = useLocation();
 
@@ -21,6 +22,16 @@ const ProtectedRoute = ({ children, requireTeacher = false }: ProtectedRouteProp
     if (!user) {
         // Redirect to login but save the current location they were trying to access
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+
+    const isAdmin = ["admin", "moderator", "viewer"].includes(profile?.role || "");
+
+    if (requireAdmin && !isAdmin) {
+        return <Navigate to="/quizzes" replace />;
+    }
+
+    if (profile?.role === "admin") {
+        return <>{children}</>;
     }
 
     if (requireTeacher && profile?.role !== "teacher") {

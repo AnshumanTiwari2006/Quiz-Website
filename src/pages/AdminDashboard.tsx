@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, History, CheckCircle2, XCircle, Mail, Calendar } from "lucide-react";
+import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import Papa from "papaparse";
 import {
   Dialog,
   DialogContent,
@@ -121,7 +122,32 @@ const AdminDashboard = () => {
     setIsDetailOpen(true);
   };
 
-  const stats = [
+  const exportScores = () => {
+    if (scores.length === 0) return toast({ title: "No data to export" });
+
+    const exportData = scores.map(s => ({
+      Student: s.userName,
+      Email: s.userEmail,
+      Quiz: s.quizTitle,
+      Score: `${Math.round(s.percentage)}%`,
+      Date: new Date(s.timestamp).toLocaleString(),
+      Status: s.isCheated ? "FLAGGED/CHEATED" : "VALID"
+    }));
+
+    const csv = Papa.unparse(exportData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `student_scores_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Scoreboard Exported", description: "CSV file generated successfully." });
+  };
+
+  const dashboardStats = [
     { label: "Your Modules", value: quizCount, icon: Brain, color: "text-primary", bg: "bg-primary/5" },
     { label: "Students Attempted", value: attemptedCount, icon: Award, color: "text-green-600", bg: "bg-green-50", onClick: () => showDetails("attempted") },
     { label: "Students Joined", value: totalStudents, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
@@ -134,8 +160,22 @@ const AdminDashboard = () => {
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight mb-2">Educator Central</h1>
+            <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] opacity-70">Analytical Dashboard & Performance Metrics</p>
+          </div>
+          <Button
+            className="rounded-2xl h-12 px-6 font-bold bg-primary shadow-soft gap-2"
+            onClick={exportScores}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Export Scoreboard
+          </Button>
+        </div>
+
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-16">
-          {stats.map((stat, index) => (
+          {dashboardStats.map((stat, index) => (
             <Card
               key={index}
               className={`p-5 rounded-3xl border-0 ${stat.bg} shadow-soft hover:shadow-medium transition-all group ring-1 ring-border/50 relative overflow-hidden ${stat.onClick ? "cursor-pointer active:scale-95" : ""}`}

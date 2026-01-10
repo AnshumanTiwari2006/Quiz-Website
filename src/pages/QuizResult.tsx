@@ -262,7 +262,7 @@ const QuizResult = () => {
             </Button>
             <Button
               onClick={handleHome}
-              className="bg-primary text-primary-foreground rounded-2xl shadow-md hover:scale-[1.02] hover:bg-primary/90 transition-all h-14 text-sm font-bold border-0"
+              className="bg-primary text-primary-foreground rounded-2xl shadow-md hover:bg-secondary hover:text-primary hover:scale-[1.02] transition-all h-14 text-sm font-bold border-0"
             >
               <Home className="mr-2 h-4 w-4" />
               Exit to Dashboard

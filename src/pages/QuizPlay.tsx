@@ -586,7 +586,7 @@ const QuizPlay = () => {
           {isLastQuestion ? (
             <Button
               onClick={handleSubmit}
-              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-lg sm:text-xl font-bold order-1 sm:order-2"
+              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
             >
               Finish Quiz
               <CheckCircle2 className="ml-3 h-6 w-6" />
@@ -594,7 +594,7 @@ const QuizPlay = () => {
           ) : (
             <Button
               onClick={() => setCurrentIndex(currentIndex + 1)}
-              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:scale-[1.05] hover:bg-primary/90 transition-all text-lg sm:text-xl font-bold order-1 sm:order-2"
+              className="w-full sm:w-auto bg-primary text-primary-foreground rounded-full px-10 sm:px-12 h-14 sm:h-16 shadow-strong hover:bg-secondary hover:text-primary hover:scale-[1.05] transition-all text-lg sm:text-xl font-bold order-1 sm:order-2 border-0"
             >
               Next
               <ChevronRight className="ml-3 h-6 w-6" />
