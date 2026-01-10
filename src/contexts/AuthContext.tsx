@@ -12,6 +12,10 @@ interface UserProfile {
     classes?: string[];
     schoolClass?: string;
     isLocked?: boolean;
+    photoURL?: string;
+    school?: string;
+    phone?: string;
+    address?: string;
 }
 
 interface AuthContextType {
@@ -48,6 +52,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
                         data.role = "admin";
                     }
+                    // Sync Google Photo if local is missing
+                    if (!data.photoURL && firebaseUser.photoURL) {
+                        data.photoURL = firebaseUser.photoURL;
+                    }
                     setProfile(data);
                 } else if (firebaseUser.email === "anshumantiwari2006@outlook.com") {
                     // Even if record doesn't exist in Firestore, hardcode the admin profile
@@ -56,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         email: firebaseUser.email,
                         role: "admin",
                         name: "Master Admin",
+                        photoURL: firebaseUser.photoURL || undefined
                     });
                 }
             } else {

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Trash2, ArrowLeft, FileQuestion, Download, Lock } from "lucide-react";
+import { Brain, Trash2, ArrowLeft, FileQuestion, Download, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchQuizzes, Quiz } from "@/lib/quizLoader";
 import Navbar from "@/components/Navbar";
@@ -58,6 +58,32 @@ const ManageQuizzes = () => {
       toast({ title: "Load Error", description: error.message, variant: "destructive" });
     }
   };
+
+  const newQuizIds = useMemo(() => {
+    const subjectCounts: Record<string, number> = {};
+    const newIds = new Set<string>();
+
+    // We don't have all quizzes sorted globally here, only teacher's quizzes.
+    // If the user meant global, we'd need another fetch.
+    // Assuming 3 latest per subject for THIS teacher.
+    // To be truly accurate to the requirement "until a next quiz is added", 
+    // we should really sort by date.
+
+    const sortedQuizzes = [...quizzes].sort((a, b) =>
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+
+    sortedQuizzes.forEach((quiz) => {
+      const subject = quiz.subject || "General Knowledge";
+      if (!subjectCounts[subject]) subjectCounts[subject] = 0;
+      if (subjectCounts[subject] < 3) {
+        newIds.add(quiz.id);
+        subjectCounts[subject]++;
+      }
+    });
+
+    return newIds;
+  }, [quizzes]);
 
   const confirmDelete = (id: string) => {
     setDeleteId(id);
@@ -117,8 +143,16 @@ const ManageQuizzes = () => {
             {quizzes.map((quiz) => (
               <Card
                 key={quiz.id}
-                className="p-6 rounded-3xl shadow-soft border-0 bg-background ring-1 ring-border/50 group hover:ring-primary/20 transition-all"
+                className="p-6 rounded-3xl shadow-soft border-0 bg-background ring-1 ring-border/50 group hover:ring-primary/20 transition-all relative overflow-hidden"
               >
+                {newQuizIds.has(quiz.id) && (
+                  <div className="absolute top-4 right-4 z-10 pointer-events-none">
+                    <Badge className="bg-primary text-white border-0 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest animate-sparkle shadow-lg flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 fill-white" />
+                      New
+                    </Badge>
+                  </div>
+                )}
                 <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-all duration-300">
                   <FileQuestion className="w-5 h-5 text-primary group-hover:text-white" />
                 </div>

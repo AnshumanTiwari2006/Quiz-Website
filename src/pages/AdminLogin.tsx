@@ -4,14 +4,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, ShieldCheck, GraduationCap, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { Chrome } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const AdminLogin = () => {
+  const [role, setRole] = useState<"student" | "teacher">("student");
+  const [teacherCode, setTeacherCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,12 +35,10 @@ const AdminLogin = () => {
       try {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       } catch (error: any) {
-        // If master admin and doesn't exist, create account
         if (isMasterEmail && isMasterPassword && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
           const { createUserWithEmailAndPassword } = await import("firebase/auth");
           userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-          // Create the profile too
           await setDoc(doc(db, "users", userCredential.user.uid), {
             uid: userCredential.user.uid,
             email,
@@ -59,19 +59,12 @@ const AdminLogin = () => {
 
         if (userData.isLocked) {
           await auth.signOut();
-          toast({
-            title: "Access Restricted",
-            description: "Your account has been administratively closed. Please connect with the hub.",
-            variant: "destructive",
-          });
+          toast({ title: "Access Restricted", description: "Account closed.", variant: "destructive" });
           setLoading(false);
           return;
         }
 
-        toast({
-          title: "Welcome back!",
-          description: `Successfully logged in as ${userData.name}`,
-        });
+        toast({ title: "Welcome back!", description: `Logged in as ${userData.name}` });
 
         if (from) {
           navigate(from, { replace: true });
@@ -83,25 +76,22 @@ const AdminLogin = () => {
           navigate("/quizzes");
         }
       } else {
-        toast({
-          title: "Profile missing",
-          description: "Please complete your signup.",
-          variant: "destructive",
-        });
+        toast({ title: "Profile missing", description: "Please complete your signup.", variant: "destructive" });
         navigate("/signup");
       }
     } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Login Failed", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleAuth = async () => {
+    if (role === "teacher" && teacherCode !== "ABIC-2026") {
+      toast({ title: "Invalid Code", description: "Teacher verification code is incorrect.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -119,9 +109,21 @@ const AdminLogin = () => {
           navigate(userData.role === "teacher" ? "/admin/dashboard" : "/quizzes");
         }
       } else {
-        // New Google user, redirect to signup to pick role
-        toast({ title: "One last step", description: "Please pick your role to complete signup" });
-        navigate("/signup");
+        const profileData = {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || "Scholar",
+          role: role,
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, "users", user.uid), profileData);
+
+        toast({ title: "Welcome!", description: "Account created successfully" });
+        if (role === "teacher") {
+          navigate("/profile", { state: { highlightMandatory: true } });
+        } else {
+          navigate("/quizzes");
+        }
       }
     } catch (error: any) {
       toast({ title: "Google Login Failed", description: error.message, variant: "destructive" });
@@ -143,7 +145,38 @@ const AdminLogin = () => {
           <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] opacity-70">Secure Authorization Portal</p>
         </div>
 
+        <div className="flex flex-col items-center gap-6 py-4 border-y border-border/10 mb-8">
+          <RadioGroup defaultValue="student" onValueChange={(v) => setRole(v as any)} className="flex gap-12">
+            <div className="flex items-center space-x-3">
+              <RadioGroupItem value="student" id="student" className="w-5 h-5" />
+              <Label htmlFor="student" className="text-lg font-bold flex items-center gap-2 cursor-pointer border-0 shadow-none">
+                <GraduationCap className="w-5 h-5 text-primary" /> Student
+              </Label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <RadioGroupItem value="teacher" id="teacher" className="w-5 h-5" />
+              <Label htmlFor="teacher" className="text-lg font-bold flex items-center gap-2 cursor-pointer border-0 shadow-none">
+                <ShieldCheck className="w-5 h-5 text-primary" /> Teacher
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
         <form onSubmit={handleLogin} className="space-y-6">
+          {role === "teacher" && (
+            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+              <Label htmlFor="teacherCode" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Teacher Verification Code</Label>
+              <Input
+                id="teacherCode"
+                placeholder="Enter Code"
+                value={teacherCode}
+                onChange={(e) => setTeacherCode(e.target.value)}
+                className="rounded-2xl border-2 border-border/10 h-16 text-lg font-bold focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30 shadow-inner bg-white/50"
+                required
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Email Address</Label>
             <div className="relative">
