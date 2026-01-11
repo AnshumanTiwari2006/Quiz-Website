@@ -230,6 +230,11 @@ const QuizList = () => {
                         {Math.floor(quiz.timer / 60)}m
                       </Badge>
                     )}
+                    {quiz.level && (
+                      <Badge variant="outline" className="border-amber-500/30 bg-amber-500/5 text-amber-600 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest group-hover:border-amber-500/50 transition-colors">
+                        {quiz.level}
+                      </Badge>
+                    )}
                   </div>
 
                   {quiz.teacherName && (

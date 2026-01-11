@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, User, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Brain, Plus, List, LogOut, Award, ShieldAlert, Users, User, History, CheckCircle2, XCircle, Mail, Calendar, FileSpreadsheet, Zap, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -242,6 +243,27 @@ const AdminDashboard = () => {
                   <h3 className="text-xl font-bold mb-2 tracking-tight group-hover:text-primary transition-colors text-foreground">Manage Quizzes</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed font-medium group-hover:text-foreground/80 transition-colors">
                     Review, Edit, or Delete existing quiz modules from the system registry.
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card
+              className="p-8 rounded-[2.5rem] border-0 bg-primary/5 shadow-soft hover:shadow-medium hover:ring-primary/20 transition-all cursor-pointer ring-1 ring-primary/10 group relative overflow-hidden"
+              onClick={() => navigate('/admin/ai-architect')}
+            >
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+              <div className="flex items-start gap-6 relative z-10">
+                <div className="w-14 h-14 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Sparkles className="w-7 h-7 fill-current" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-bold tracking-tight text-foreground transition-colors">AI Quiz Architect</h3>
+                    <Badge className="bg-primary/20 text-primary border-0 rounded-full text-[8px] font-black tracking-widest uppercase px-2">New</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium group-hover:text-foreground/80 transition-colors">
+                    Generate professional multi-stage assessments from PDF/Word documents instantly.
                   </p>
                 </div>
               </div>

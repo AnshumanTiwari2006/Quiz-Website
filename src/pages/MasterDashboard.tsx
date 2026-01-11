@@ -40,7 +40,8 @@ import {
     Edit,
     Zap,
     KeyRound,
-    ShieldCheck
+    ShieldCheck,
+    Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -94,6 +95,8 @@ const MasterDashboard = () => {
     const [chartData, setChartData] = useState<any[]>([]);
     const [subjectData, setSubjectData] = useState<any[]>([]);
     const [arenaSessions, setArenaSessions] = useState<any[]>([]);
+    const [aiSessions, setAiSessions] = useState<any[]>([]);
+    const [aiLock, setAiLock] = useState<any>(null);
     const [activeTab, setActiveTab] = useState("users");
 
     const isAdmin = profile?.role === "admin";
@@ -119,6 +122,14 @@ const MasterDashboard = () => {
             setScores(allScores);
 
 
+            const aiSessionsSnap = await getDocs(collection(db, "ai_sessions"));
+            const allAISessions = aiSessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+            allAISessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+            setAiSessions(allAISessions);
+
+            const lockSnap = await getDoc(doc(db, "system", "ai_lock"));
+            setAiLock(lockSnap.exists() ? lockSnap.data() : null);
+
             const arenaSnap = await getDocs(collection(db, "arena_sessions"));
             const allArena = arenaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
             const sortedArena = allArena.sort((a, b) => {
@@ -127,7 +138,7 @@ const MasterDashboard = () => {
                 return dateB - dateA;
             });
             setArenaSessions(sortedArena);
-            console.log("Dashboard: Arena Data Fetched:", sortedArena.length);
+            (window as any).aiSessions = allAISessions; // Store for tab access
 
             // AUTO-JANITOR: Clean up stale sessions (no heartbeat for 15+ mins)
             const fifteenMinsAgo = Date.now() - (15 * 60 * 1000);
@@ -289,6 +300,21 @@ const MasterDashboard = () => {
             });
         } finally {
             setIsUpdatingCode(false);
+        }
+    };
+
+    const toggleAIRestriction = async (userId: string, currentStatus: boolean) => {
+        if (!isAdmin) return toast({ title: "Access Denied", variant: "destructive" });
+        try {
+            await updateDoc(doc(db, "users", userId), { aiRestricted: !currentStatus });
+            setUsers(users.map(u => u.id === userId ? { ...u, aiRestricted: !currentStatus } : u));
+            toast({
+                title: !currentStatus ? "AI Access Restricted" : "AI Access Restored",
+                description: `Teacher and generation rights updated.`,
+                className: !currentStatus ? "bg-destructive text-white border-0" : "bg-success text-white border-0"
+            });
+        } catch (error) {
+            toast({ title: "Update Failed", variant: "destructive" });
         }
     };
 
@@ -599,6 +625,9 @@ const MasterDashboard = () => {
                         <TabsTrigger value="arena" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
                             <Zap className="w-3.5 h-3.5" /> Arena Registry
                         </TabsTrigger>
+                        <TabsTrigger value="ai" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5" /> AI Management
+                        </TabsTrigger>
                         <TabsTrigger value="system" className="rounded-xl px-8 py-3 font-bold text-[10px] uppercase tracking-widest data-[state=active]:bg-background data-[state=active]:shadow-soft data-[state=active]:text-primary flex items-center gap-2">
                             <Settings className="w-3.5 h-3.5" /> System Controls
                         </TabsTrigger>
@@ -873,14 +902,26 @@ const MasterDashboard = () => {
                                                         )}
                                                     </td>
                                                     <td className="py-6">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => toggleUserLock(u.id, !!u.isLocked)}
-                                                            className={`rounded-full h-8 px-4 font-bold text-[9px] uppercase tracking-widest transition-all ${u.isLocked ? "bg-destructive/10 text-destructive hover:bg-destructive/20" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
-                                                        >
-                                                            {u.isLocked ? "Account Closed" : "Status: Active"}
-                                                        </Button>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => toggleUserLock(u.id, !!u.isLocked)}
+                                                                className={`rounded-full h-8 px-4 font-bold text-[9px] uppercase tracking-widest transition-all ${u.isLocked ? "bg-destructive/10 text-destructive hover:bg-destructive/20" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                                                            >
+                                                                {u.isLocked ? "Account Closed" : "Status: Active"}
+                                                            </Button>
+                                                            {u.role !== 'student' && (
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => toggleAIRestriction(u.id, !!u.aiRestricted)}
+                                                                    className={`rounded-full h-8 px-4 font-bold text-[9px] uppercase tracking-widest transition-all ${u.aiRestricted ? "bg-destructive/10 text-destructive" : "bg-blue-100 text-blue-700"}`}
+                                                                >
+                                                                    {u.aiRestricted ? "AI Restricted" : "AI Enabled"}
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                     <td className="py-6 text-right">
                                                         <div className="flex items-center justify-end gap-2 pr-2 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -1010,6 +1051,208 @@ const MasterDashboard = () => {
                                                                 <Button size="icon" variant="ghost" className="rounded-xl h-11 w-11 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all" onClick={() => deleteQuiz(q.id)}>
                                                                     <Trash2 className="w-5 h-5" />
                                                                 </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="ai" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Card className="p-8 rounded-[2.5rem] border-0 bg-background shadow-medium ring-1 ring-border/50">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                                            <Sparkles className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <h3 className="text-3xl font-black tracking-tight">AI Architect Governance</h3>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground font-medium">Platform-level oversight of generative quiz intelligence and teacher quotas.</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <Button
+                                        onClick={loadAllData}
+                                        variant="outline"
+                                        className="h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest gap-2 bg-secondary/20 border-border/20 shadow-none border-0"
+                                    >
+                                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                                        Refresh Registry
+                                    </Button>
+                                    <Button className="h-12 px-8 rounded-2xl bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/20 text-white font-black text-[10px] uppercase tracking-widest gap-2 animate-pulse border-0">
+                                        <Zap className="w-3.5 h-3.5 fill-current" />
+                                        Export AI Logs
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Detailed Stats Grid */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                                {[
+                                    {
+                                        label: "Architect Status",
+                                        value: aiLock?.active ? "Busy" : "Ready",
+                                        sub: aiLock?.active ? `User: ${aiLock.teacherName?.split(' ')[0]}` : "Awaiting Document",
+                                        icon: Brain,
+                                        color: aiLock?.active ? "text-orange-500" : "text-green-500",
+                                        bg: aiLock?.active ? "bg-orange-50" : "bg-green-50"
+                                    },
+                                    {
+                                        label: "Total Generations",
+                                        value: aiSessions.length,
+                                        sub: `${aiSessions.filter(s => new Date(s.updatedAt).toDateString() === new Date().toDateString()).length} today`,
+                                        icon: TrendingUp,
+                                        color: "text-primary",
+                                        bg: "bg-primary/5"
+                                    },
+                                    {
+                                        label: "Questions Built",
+                                        value: aiSessions.reduce((acc, s) => {
+                                            const q = s.generatedQuiz || {};
+                                            return acc + (q.easy?.length || 0) + (q.moderate?.length || 0) + (q.hard?.length || 0);
+                                        }, 0),
+                                        sub: "Across all tiers",
+                                        icon: BarChart3,
+                                        color: "text-blue-600",
+                                        bg: "bg-blue-50"
+                                    },
+                                    {
+                                        label: "Storage janitor",
+                                        value: "7 Days",
+                                        sub: "Auto-purging assets",
+                                        icon: ShieldCheck,
+                                        color: "text-purple-600",
+                                        bg: "bg-purple-50"
+                                    },
+                                ].map((stat, i) => (
+                                    <div key={i} className={`p-6 rounded-[2.5rem] ${stat.bg} ring-1 ring-border/30 shadow-soft group hover:scale-[1.02] transition-all`}>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="p-3 bg-white rounded-xl shadow-sm">
+                                                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                                            </div>
+                                            <ArrowUpRight className="w-4 h-4 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">{stat.label}</p>
+                                            <p className={`text-2xl font-black ${stat.color} tracking-tight`}>{stat.value}</p>
+                                            <p className="text-[9px] font-bold text-muted-foreground mt-1 opacity-70">{stat.sub}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mb-12">
+                                <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-6 px-2">Privileged Account Quotas</h4>
+                                <div className="grid lg:grid-cols-4 gap-6">
+                                    {users.filter(u => u.role !== 'student').slice(0, 12).map(staff => {
+                                        const staffSessions = aiSessions.filter((s: any) => s.teacherId === staff.id);
+                                        const now = new Date();
+                                        const todaySessions = staffSessions.filter(s => new Date(s.updatedAt).toDateString() === now.toDateString());
+                                        const totalTiersToday = todaySessions.reduce((acc: number, s: any) => {
+                                            const q = s.generatedQuiz || {};
+                                            return acc + (q.easy?.length > 0 ? 1 : 0) + (q.moderate?.length > 0 ? 1 : 0) + (q.hard?.length > 0 ? 1 : 0);
+                                        }, 0);
+
+                                        return (
+                                            <div key={staff.id} className="p-6 rounded-[2.2rem] bg-secondary/5 border border-border/30 hover:bg-white hover:shadow-medium transition-all group relative">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary group-hover:rotate-6 transition-transform">
+                                                        {staff.name?.charAt(0)}
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="font-bold text-sm truncate">{staff.name}</p>
+                                                        <button
+                                                            onClick={() => toggleAIRestriction(staff.id, !!staff.aiRestricted)}
+                                                            className={`rounded-full h-4 px-2 text-[7px] font-black uppercase tracking-widest transition-all border-0 ring-1 ring-inset ${staff.aiRestricted ? 'bg-destructive/10 text-destructive ring-destructive/20' : 'bg-success/10 text-success ring-success/20'} hover:scale-105`}
+                                                        >
+                                                            {staff.aiRestricted ? 'Restricted' : 'Authorized'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-end">
+                                                        <p className="text-[12px] font-black text-foreground">{totalTiersToday}<span className="text-[9px] text-muted-foreground/60 ml-1">/9 credits</span></p>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40">Daily Load</p>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-secondary/20 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full transition-all duration-1000 ${totalTiersToday >= 9 ? 'bg-destructive' : 'bg-primary shadow-[0_0_10px_theme(colors.primary.DEFAULT)]'}`}
+                                                            style={{ width: `${Math.min((totalTiersToday / 9) * 100, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-border/50">
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Privileged User</th>
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Intelligence Source</th>
+                                            <th className="text-left pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Module progress Path</th>
+                                            <th className="text-right pb-6 text-[10px] uppercase tracking-widest font-black text-muted-foreground/60">Deployment Matrix</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/30">
+                                        {aiSessions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="py-20 text-center">
+                                                    <Sparkles className="w-12 h-12 text-muted-foreground/10 mx-auto mb-4" />
+                                                    <p className="font-bold text-muted-foreground tracking-widest uppercase text-[10px]">No AI generation activity tracked</p>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            aiSessions.map((s: any) => (
+                                                <tr key={s.id} className="group hover:bg-secondary/20 transition-all duration-300">
+                                                    <td className="py-8">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-sm text-foreground">{users.find(u => u.id === s.teacherId)?.name || "Educator"}</span>
+                                                            <span className="text-[9px] text-muted-foreground/60 font-medium tracking-tight uppercase tracking-widest">{s.teacherId?.slice(0, 12)}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-8">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shadow-sm">
+                                                                <FileSpreadsheet className="w-5 h-5 text-primary/70" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold truncate max-w-[200px] text-foreground">{s.fileName}</p>
+                                                                <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest flex items-center gap-1">
+                                                                    <Zap className="w-2.5 h-2.5" /> Gemini 2.5 Flash-lite
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-8">
+                                                        <div className="flex gap-2">
+                                                            {['easy', 'moderate', 'hard'].map(tier => {
+                                                                const count = s.generatedQuiz?.[tier]?.length || 0;
+                                                                return (
+                                                                    <Badge
+                                                                        key={tier}
+                                                                        className={`rounded-[0.6rem] px-3 py-1.5 text-[8px] font-black uppercase tracking-widest border-0 transition-all ${count > 0 ? 'bg-primary text-white shadow-soft scale-110 mx-1' : 'bg-muted-foreground/5 text-muted-foreground/20'}`}
+                                                                    >
+                                                                        {tier} {count > 0 ? `(${count}Q)` : ''}
+                                                                    </Badge>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-8 text-right">
+                                                        <div className="flex flex-col items-end">
+                                                            <p className="text-xs font-bold text-foreground/80">{new Date(s.updatedAt).toLocaleDateString()}</p>
+                                                            <p className="text-[10px] font-medium text-muted-foreground/60">{new Date(s.updatedAt).toLocaleTimeString()}</p>
+                                                            {s.janitorPurged && (
+                                                                <Badge className="bg-amber-50 text-amber-600 border-0 rounded-full text-[7px] font-black uppercase h-3 mt-1.5">Purged</Badge>
                                                             )}
                                                         </div>
                                                     </td>

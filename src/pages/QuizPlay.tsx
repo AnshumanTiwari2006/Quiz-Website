@@ -3,10 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft, ArrowRight } from "lucide-react";
+import { Brain, Clock, CheckCircle2, ChevronRight, ChevronLeft, ArrowRight, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import FlashcardComponent from "@/components/FlashcardComponent";
 import Navbar from "@/components/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
 
 const shuffleArray = (array: any[]) => {
   const newArr = [...array];
@@ -43,6 +44,27 @@ const QuizPlay = () => {
   const rightRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [lineCoords, setLineCoords] = useState<any[]>([]);
+
+  // Interactive Feedback States
+  const [showMeme, setShowMeme] = useState(false);
+  const [memeUrl, setMemeUrl] = useState("");
+  const [activePowerUp, setActivePowerUp] = useState<"2x" | "shield" | "eraser" | null>(null);
+  const [availablePowerUp, setAvailablePowerUp] = useState<"2x" | "shield" | "eraser" | null>(null);
+  const [usedPowerUps, setUsedPowerUps] = useState<Record<string, string>>({});
+  const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
+  const [answerStatus, setAnswerStatus] = useState<"correct" | "incorrect" | null>(null);
+
+  const correctMemes = [
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7abKhOpu0NPGVYME/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/12Srg6jVAnBvDG/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/l0Hlx09pHLkUWF9OE/giphy.gif"
+  ];
+
+  const incorrectMemes = [
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/12Bpme5pTzGmg8/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7TKVUn7iM8FMEU24/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/d2lcHJTG5Tscg/giphy.gif"
+  ];
 
   useEffect(() => {
     if (!authLoading) {
@@ -142,6 +164,15 @@ const QuizPlay = () => {
       } else {
         setShuffledMatchOptions([]);
       }
+
+      // Randomized Power-up Logic (~30% chance)
+      setActivePowerUp(null); // Reset active power-up
+      if (Math.random() < 0.3) {
+        const types: ("2x" | "shield" | "eraser")[] = ["2x", "shield", "eraser"];
+        setAvailablePowerUp(types[Math.floor(Math.random() * types.length)]);
+      } else {
+        setAvailablePowerUp(null);
+      }
     }
   }, [currentIndex, quiz]);
 
@@ -199,8 +230,53 @@ const QuizPlay = () => {
     }
   }, [timeLeft, quiz]);
 
+  useEffect(() => {
+    const q = quiz?.questions[currentIndex];
+    if (activePowerUp === "eraser" && q?.type === 'mcq' && q.options) {
+      const wrongOptions = q.options.filter((o: string) => o.toLowerCase() !== q.answer.toLowerCase());
+      const toHide = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
+      setHiddenOptions(toHide);
+    } else {
+      setHiddenOptions([]);
+    }
+  }, [activePowerUp, currentIndex, quiz]);
+
   const handleAnswer = (questionId: string, answer: any) => {
+    // Auto-apply available power-up if not already manually activated
+    let powerToUse = activePowerUp;
+    if (availablePowerUp && !activePowerUp) {
+      powerToUse = availablePowerUp;
+      setActivePowerUp(availablePowerUp);
+      setAvailablePowerUp(null);
+    }
+
+    if (powerToUse) {
+      setUsedPowerUps(prev => ({ ...prev, [questionId]: powerToUse! }));
+    }
+
     setAnswers({ ...answers, [questionId]: answer });
+
+    const q = quiz.questions[currentIndex];
+    // Immediate Feedback for MCQ/TF
+    if (q.type === "mcq" || q.type === "truefalse") {
+      const isCorrect = answer.toString().trim().toLowerCase() === q.answer.toString().trim().toLowerCase();
+      setAnswerStatus(isCorrect ? "correct" : "incorrect");
+
+      const pool = isCorrect ? correctMemes : incorrectMemes;
+      setMemeUrl(pool[Math.floor(Math.random() * pool.length)]);
+      setShowMeme(true);
+      setTimeout(() => {
+        setShowMeme(false);
+        // Auto-advance if not the last question and not already advanced
+        if (currentIndex < quiz.questions.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+        } else if (currentIndex === quiz.questions.length - 1) {
+          // If last question, maybe just keep it there so they can click finish
+        }
+      }, 3000);
+
+      setActivePowerUp(null); // Reset power-up after use
+    }
   };
 
   const handleMatchClick = (side: 'left' | 'right', value: string, questionId: string) => {
@@ -255,7 +331,12 @@ const QuizPlay = () => {
         correctAnswerStr = pairs.map((p: any) => `${p.left} → ${p.right}`).join(", ");
       }
 
-      if (isCorrect) score += q.points;
+      let questionPoints = q.points;
+      if (isCorrect && usedPowerUps[q.id] === "2x") {
+        questionPoints *= 2;
+      }
+
+      if (isCorrect) score += questionPoints;
 
       return {
         question: q.question,
@@ -297,8 +378,34 @@ const QuizPlay = () => {
   const isLastQuestion = currentIndex === quiz.questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 relative overflow-hidden">
       <Navbar />
+
+      {/* Meme Feedback Overlay */}
+      <AnimatePresence>
+        {showMeme && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.5, rotate: 10 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md"
+          >
+            <Card className="p-8 rounded-[3rem] border-0 bg-white shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full">
+              <div className="w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner ring-1 ring-border/50">
+                <img src={memeUrl} alt="Feedback" className="w-full h-full object-cover" />
+              </div>
+              <div className="text-center">
+                <p className={`text-4xl font-black mb-1 ${answerStatus === "correct" ? "text-success" : "text-destructive"}`}>
+                  {answerStatus === "correct" ? "AWESOME!" : "OOF!"}
+                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">
+                  {answerStatus === "correct" ? "Keep it up!" : "Don't give up!"}
+                </p>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Quiz Progress Bar & Header */}
       <div className="border-b border-border/10 bg-secondary/30 backdrop-blur-md sticky top-[73px] z-40 py-4 px-6">
@@ -374,7 +481,49 @@ const QuizPlay = () => {
                   back={currentQuestion.back || ""}
                 />
               ) : (
-                <Card className="p-10 md:p-14 rounded-[2.5rem] border-0 bg-secondary/20 shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col min-h-[400px]">
+                <Card className="p-10 md:p-14 rounded-[2.5rem] border-0 bg-secondary/20 shadow-soft ring-1 ring-border/50 animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col min-h-[400px] relative">
+                  {/* Randomized Power-up Trigger UI */}
+                  {availablePowerUp && !answers[currentQuestion.id] && (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute -top-4 -right-4 z-50"
+                    >
+                      <Button
+                        onClick={() => {
+                          setActivePowerUp(availablePowerUp);
+                          setAvailablePowerUp(null);
+                          toast({
+                            title: "Power-up Activated!",
+                            description: `${availablePowerUp === '2x' ? 'Double Points' : availablePowerUp === 'shield' ? 'Shield Protection' : '50/50 Eraser'} is now active.`,
+                          });
+                        }}
+                        className="h-16 w-16 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-xl ring-4 ring-white animate-pulse flex flex-col items-center justify-center p-0"
+                      >
+                        {availablePowerUp === "2x" ? <Zap className="w-6 h-6 fill-current" /> :
+                          availablePowerUp === "eraser" ? <Brain className="w-6 h-6" /> :
+                            <div className="w-6 h-6 border-2 border-current rounded-full flex items-center justify-center font-bold text-xs uppercase">S</div>}
+                        <span className="text-[8px] font-black uppercase mt-1">Bonus!</span>
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {/* Active Power-up Indicator */}
+                  {activePowerUp && !answers[currentQuestion.id] && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="absolute top-6 right-6 flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full border border-primary/20"
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary animate-pulse flex items-center gap-2">
+                        {activePowerUp === '2x' ? <Zap className="w-3 h-3 fill-current" /> :
+                          activePowerUp === 'eraser' ? <Brain className="w-3 h-3" /> :
+                            <CheckCircle2 className="w-3 h-3" />}
+                        {activePowerUp === '2x' ? '2x Points' : activePowerUp === 'eraser' ? 'Eraser' : 'Shield'} Active
+                      </span>
+                    </motion.div>
+                  )}
+
                   <div className="mb-10">
                     <h3 className="text-xl md:text-2xl font-bold tracking-tight leading-snug text-foreground break-words">{currentQuestion.question}</h3>
                   </div>
@@ -400,10 +549,14 @@ const QuizPlay = () => {
                           ? answers[currentQuestion.id] === option
                           : (answers[currentQuestion.id] || "").split("|").includes(option);
 
+                        const isHidden = hiddenOptions.includes(option);
+                        if (isHidden) return null;
+
                         return (
                           <Button
                             key={index}
                             variant={isSelected ? "default" : "outline"}
+                            disabled={!!answers[currentQuestion.id]}
                             onClick={() => {
                               if (currentQuestion.type === "mcq") {
                                 handleAnswer(currentQuestion.id, option);
@@ -416,9 +569,15 @@ const QuizPlay = () => {
                                 handleAnswer(currentQuestion.id, opts.join("|"));
                               }
                             }}
-                            className={`w-full justify-start text-left h-auto py-6 px-8 rounded-2xl transition-all border-2 group shadow-sm ${isSelected
-                              ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.01]"
-                              : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
+                            className={`w-full justify-start text-left h-auto py-6 px-8 rounded-2xl transition-all border-2 group shadow-sm ${answers[currentQuestion.id]
+                              ? option === currentQuestion.answer
+                                ? "bg-success/10 border-success text-success shadow-lg"
+                                : isSelected
+                                  ? "bg-destructive/10 border-destructive text-destructive"
+                                  : "bg-white/50 border-white/80 opacity-50"
+                              : isSelected
+                                ? "bg-primary text-primary-foreground border-primary shadow-medium scale-[1.01]"
+                                : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
                               }`}
                           >
                             <span className="flex items-center gap-4 w-full">
@@ -443,10 +602,17 @@ const QuizPlay = () => {
                         <Button
                           key={option}
                           variant={answers[currentQuestion.id] === option ? "default" : "outline"}
+                          disabled={!!answers[currentQuestion.id]}
                           onClick={() => handleAnswer(currentQuestion.id, option)}
-                          className={`h-40 text-2xl font-bold uppercase tracking-widest rounded-[2rem] border-2 transition-all ${answers[currentQuestion.id] === option
-                            ? "bg-primary text-primary-foreground border-primary shadow-strong"
-                            : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
+                          className={`h-40 text-2xl font-bold uppercase tracking-widest rounded-[2rem] border-2 transition-all ${answers[currentQuestion.id]
+                            ? option === currentQuestion.answer
+                              ? "bg-success/10 border-success text-success shadow-lg"
+                              : answers[currentQuestion.id] === option
+                                ? "bg-destructive/10 border-destructive text-destructive"
+                                : "bg-white/50 border-white/80 opacity-50"
+                            : answers[currentQuestion.id] === option
+                              ? "bg-primary text-primary-foreground border-primary shadow-strong"
+                              : "bg-white/50 border-white/80 hover:border-primary/30 hover:bg-primary hover:text-white"
                             }`}
                         >
                           {option}
@@ -543,6 +709,8 @@ const QuizPlay = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Power-ups Panel Removed - Now randomized and auto-applied */}
                 </Card>
               )}
             </div>

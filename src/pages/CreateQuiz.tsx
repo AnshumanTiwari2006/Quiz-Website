@@ -35,6 +35,7 @@ const SUBJECTS = [
 ];
 
 const CLASSES = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+const LEVELS = ["Easy", "Moderate", "Hard"];
 
 const CreateQuiz = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const CreateQuiz = () => {
   const [timer, setTimer] = useState(0);
   const [subject, setSubject] = useState("");
   const [targetClass, setTargetClass] = useState("");
+  const [level, setLevel] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizImage, setQuizImage] = useState<string>("");
@@ -89,6 +91,7 @@ const CreateQuiz = () => {
             setQuestions(quiz.questions || []);
             setSubject(quiz.subject || "");
             setTargetClass(quiz.class || "");
+            setLevel(quiz.level || "");
             setTeacherName(quiz.teacherName || "");
             setQuizImage(quiz.image || "");
           } else {
@@ -247,8 +250,9 @@ const CreateQuiz = () => {
       timer,
       subject,
       class: targetClass,
+      level,
       teacherName,
-      teacherId: user?.uid,
+      teacherId: user.uid,
       teacherPhoto: profile?.photoURL || "",
       questionCount: questions.length,
       image: quizImage,
@@ -257,11 +261,14 @@ const CreateQuiz = () => {
     };
 
     try {
+      // Sanitation: Remove undefined fields which cause Firestore to fail
+      const sanitizedData = JSON.parse(JSON.stringify(quizData));
+
       if (isEditing) {
-        await updateDoc(doc(db, "quizzes", quizId as string), quizData);
+        await updateDoc(doc(db, "quizzes", quizId as string), sanitizedData);
       } else {
         await addDoc(collection(db, "quizzes"), {
-          ...quizData,
+          ...sanitizedData,
           createdAt: new Date().toISOString(),
         });
       }
@@ -414,7 +421,21 @@ const CreateQuiz = () => {
               </Select>
             </div>
 
-            <div className="space-y-3 md:col-span-2">
+            <div className="space-y-3">
+              <Label htmlFor="level" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Difficulty Level (Optional)</Label>
+              <Select value={level} onValueChange={setLevel}>
+                <SelectTrigger className="rounded-2xl border-2 border-border/10 h-14 font-bold text-foreground bg-white/50">
+                  <SelectValue placeholder="Select Level" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-0 shadow-strong ring-1 ring-border/50 p-2">
+                  {LEVELS.map(l => (
+                    <SelectItem key={l} value={l} className="rounded-xl font-bold py-3 text-sm">{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3 md:col-span-1">
               <Label htmlFor="teacher" className="text-[10px] uppercase font-bold tracking-widest text-primary/80 ml-1">Educator / Teacher Name (Optional)</Label>
               <Input
                 id="teacher"

@@ -16,6 +16,7 @@ interface UserProfile {
     school?: string;
     phone?: string;
     address?: string;
+    aiRestricted?: boolean;
 }
 
 interface AuthContextType {

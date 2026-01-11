@@ -8,6 +8,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateQuiz from "./pages/CreateQuiz";
 import ManageQuizzes from "./pages/ManageQuizzes";
+import AIGenerator from "./pages/AIGenerator";
 import QuizList from "./pages/QuizList";
 import QuizEntry from "./pages/QuizEntry";
 import QuizPlay from "./pages/QuizPlay";
@@ -58,6 +59,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/create" element={<ProtectedRoute requireTeacher><PageTransition><CreateQuiz /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/edit/:quizId" element={<ProtectedRoute requireTeacher><PageTransition><CreateQuiz /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/quizzes" element={<ProtectedRoute requireTeacher><PageTransition><ManageQuizzes /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/ai-architect" element={<ProtectedRoute requireTeacher><PageTransition><AIGenerator /></PageTransition></ProtectedRoute>} />
 
         {/* Admin Only Protected Routes */}
         <Route path="/admin/master-dashboard" element={<ProtectedRoute requireAdmin><PageTransition><MasterDashboard /></PageTransition></ProtectedRoute>} />

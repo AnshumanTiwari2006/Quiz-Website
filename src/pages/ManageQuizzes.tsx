@@ -162,6 +162,11 @@ const ManageQuizzes = () => {
                   <Badge className="bg-secondary text-primary border-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest group-hover:bg-primary/10 transition-colors">
                     Cloud Active
                   </Badge>
+                  {quiz.level && (
+                    <Badge className="bg-amber-500/10 text-amber-600 border-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest">
+                      {quiz.level}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className="border-border/40 bg-transparent rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:border-primary/20 transition-colors">
                     {quiz.questionCount} Items
                   </Badge>

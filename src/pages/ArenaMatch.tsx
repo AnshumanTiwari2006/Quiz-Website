@@ -31,6 +31,23 @@ const ArenaMatch = () => {
     const [loading, setLoading] = useState(true);
     const [shortAnswer, setShortAnswer] = useState("");
     const [isFlipped, setIsFlipped] = useState(false);
+    const [showMeme, setShowMeme] = useState(false);
+    const [memeUrl, setMemeUrl] = useState("");
+    const [activePowerUp, setActivePowerUp] = useState<"2x" | "shield" | "eraser" | null>(null);
+    const [pointsEarned, setPointsEarned] = useState(0);
+    const [latestStatus, setLatestStatus] = useState<"none" | "correct" | "incorrect">("none");
+
+    const correctMemes = [
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7abKhOpu0NPGVYME/giphy.gif",
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/12Srg6jVAnBvDG/giphy.gif",
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/l0Hlx09pHLkUWF9OE/giphy.gif"
+    ];
+
+    const incorrectMemes = [
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/12Bpme5pTzGmg8/giphy.gif",
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7TKVUn7iM8FMEU24/giphy.gif",
+        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp4Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3p6Z3AmZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/d2lcHJTG5Tscg/giphy.gif"
+    ];
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -134,15 +151,31 @@ const ArenaMatch = () => {
         const isCorrect = selectedAnswer === currentQuestion.answer;
         setHasAnswered(true);
         setAnswerStatus(isCorrect ? "correct" : "incorrect");
+        setLatestStatus(isCorrect ? "correct" : "incorrect");
 
-        // Scoring Logic: 
-        // Base Points: 50
-        // Speed Multiplier: Remaining Time % of base
-        // Max Points: 100
         let points = 0;
         if (isCorrect) {
             const timeBonus = Math.floor((timeLeft / (session.settings?.timePerQuestion || 30)) * 50);
             points = 50 + timeBonus;
+
+            // Apply 2x Power-up
+            if (activePowerUp === "2x") {
+                points *= 2;
+                setActivePowerUp(null); // Combine into one state update later if needed
+            }
+        }
+
+        setPointsEarned(points);
+
+        // Show Meme Feedback
+        const pool = isCorrect ? correctMemes : incorrectMemes;
+        setMemeUrl(pool[Math.floor(Math.random() * pool.length)]);
+        setShowMeme(true);
+        setTimeout(() => setShowMeme(false), 3000); // 3 seconds of dopamine/shame
+
+        // Eraser is a pre-answer power-up, but we reset it here just in case
+        if (activePowerUp === "eraser" || activePowerUp === "shield") {
+            setActivePowerUp(null);
         }
 
         try {
@@ -206,6 +239,18 @@ const ArenaMatch = () => {
     const isTeacher = profile?.role === "teacher" || profile?.role === "admin";
     const canPlay = !isTeacher || !isHost;
 
+    // Eraser logic: Determine which options to hide
+    const [hiddenOptions, setHiddenOptions] = useState<string[]>([]);
+    useEffect(() => {
+        if (activePowerUp === "eraser" && currentQuestion?.options) {
+            const wrongOptions = currentQuestion.options.filter((o: string) => o !== currentQuestion.answer);
+            const toHide = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
+            setHiddenOptions(toHide);
+        } else {
+            setHiddenOptions([]);
+        }
+    }, [activePowerUp, currentQuestion]);
+
     const renderLeaderboard = () => (
         <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -242,8 +287,34 @@ const ArenaMatch = () => {
     );
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
             <Navbar />
+
+            {/* Meme Feedback Overlay */}
+            <AnimatePresence>
+                {showMeme && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.5, rotate: 10 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md"
+                    >
+                        <Card className="p-8 rounded-[3rem] border-0 bg-white shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full">
+                            <div className="w-full aspect-square rounded-[2rem] overflow-hidden shadow-inner ring-1 ring-border/50">
+                                <img src={memeUrl} alt="Feedback" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="text-center">
+                                <p className={`text-4xl font-black mb-1 ${latestStatus === "correct" ? "text-success" : "text-destructive"}`}>
+                                    {latestStatus === "correct" ? `+${pointsEarned}` : "OOF!"}
+                                </p>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">
+                                    {latestStatus === "correct" ? "Absolute Legend" : "Mission Failed"}
+                                </p>
+                            </div>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <main className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-0 h-[calc(100vh-80px)] overflow-hidden relative">
 
@@ -424,6 +495,10 @@ const ArenaMatch = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {(currentQuestion.options || (currentQuestion.type === 'truefalse' ? ['True', 'False'] : [])).map((option: string, idx: number) => {
                                             const isCorrect = option === currentQuestion.answer;
+                                            const isHidden = hiddenOptions.includes(option);
+
+                                            if (isHidden) return null;
+
                                             return (
                                                 <Button
                                                     key={idx}
@@ -443,6 +518,32 @@ const ArenaMatch = () => {
                                                 </Button>
                                             );
                                         })}
+                                    </div>
+                                )}
+
+                                {/* Power-Ups Panel */}
+                                {(canPlay && !hasAnswered) && (
+                                    <div className="mt-8 flex justify-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        <Button
+                                            onClick={() => setActivePowerUp("2x")}
+                                            className={cn(
+                                                "rounded-2xl h-16 w-16 p-0 shadow-soft transition-all",
+                                                activePowerUp === "2x" ? "bg-amber-500 text-white scale-110 ring-4 ring-amber-500/20" : "bg-white text-amber-500 hover:bg-amber-50"
+                                            )}
+                                            title="Double Points"
+                                        >
+                                            <Zap className="w-6 h-6 fill-current" />
+                                        </Button>
+                                        <Button
+                                            onClick={() => setActivePowerUp("eraser")}
+                                            className={cn(
+                                                "rounded-2xl h-16 w-16 p-0 shadow-soft transition-all",
+                                                activePowerUp === "eraser" ? "bg-blue-500 text-white scale-110 ring-4 ring-blue-500/20" : "bg-white text-blue-500 hover:bg-blue-50"
+                                            )}
+                                            title="50/50 Eraser"
+                                        >
+                                            <Brain className="w-6 h-6" />
+                                        </Button>
                                     </div>
                                 )}
                             </div>

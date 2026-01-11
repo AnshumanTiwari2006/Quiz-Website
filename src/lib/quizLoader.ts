@@ -10,6 +10,8 @@ export interface Quiz {
     teacherName?: string;
     createdAt?: any;
     image?: string;
+    level?: string;
+    teacherPhoto?: string;
 }
 
 export const fetchQuizzes = async (): Promise<Quiz[]> => {
