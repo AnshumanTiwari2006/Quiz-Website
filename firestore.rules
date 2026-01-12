@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isTeacher() {
+      return hasRole('teacher') || isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      
+      // DYNAMIC VALIDATION: Verify the teacher code against the one set in Master Dashboard
+      allow create: if isSignedIn() && 
+        (request.resource.data.role != 'teacher' || 
+         request.resource.data.teacherCode == get(/databases/$(database)/documents/system/config).data.teacherCode);
+        
+      allow update: if (request.auth.uid == userId || isAdmin()) &&
+        (request.resource.data.role != 'teacher' || 
+         request.resource.data.teacherCode == get(/databases/$(database)/documents/system/config).data.teacherCode);
+        
+      allow delete: if isAdmin();
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if true;
+      allow create: if isTeacher();
+      allow update: if isTeacher() && (request.auth.uid == resource.data.teacherId || isAdmin());
+      allow delete: if isTeacher() && (request.auth.uid == resource.data.teacherId || isAdmin());
+    }
+
+    match /arena_sessions/{code} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+      
+      match /participants/{userId} {
+        allow read: if true;
+        
+        // ANTI-CHEAT: Prevent users from increasing their score by more than 100 in a single turn
+        allow write: if request.auth.uid == userId && 
+          (resource == null || request.resource.data.score <= (resource.data.score + 105));
+      }
+    }
+
+    match /system/{doc=**} {
+      // Only Admins can see the global configuration
+      allow read, write: if isAdmin();
+    }
+  }
+}
